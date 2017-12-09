@@ -4,7 +4,9 @@ module SimpleMapReduce
   module Server
     class Job
       attr_reader :id, :map_script, :map_class_name, :reduce_script, :reduce_class_name,
-                  :job_input_file_path, :job_output_directory_path, :map_worker,
+                  :job_input_bucket_name, :job_input_directory_path,
+                  :job_output_bucket_name, :job_output_directory_path,
+                  :map_worker,
                   :status
       STATUS = {
         ready: 0,
@@ -28,18 +30,23 @@ module SimpleMapReduce
                      map_class_name:,
                      reduce_script:,
                      reduce_class_name:,
-                     job_input_file_path:,
+                     job_input_bucket_name:,
+                     job_input_directory_path:,
+                     job_output_bucket_name:,
                      job_output_directory_path:,
-                     map_worker:)
+                     map_worker: nil,
+                     status: nil)
         @id = id
         @map_script = map_script
         @map_class_name = map_class_name
         @reduce_script = reduce_script
         @reduce_class_name = reduce_class_name
-        @job_input_file_path = job_input_file_path
+        @job_input_bucket_name = job_input_bucket_name
+        @job_input_directory_path = job_input_directory_path
+        @job_output_bucket_name = job_output_bucket_name
         @job_output_directory_path = job_output_directory_path
         @map_worker = map_worker
-        @status = STATUS[:ready]
+        @status = status || STATUS[:ready]
       end
       
       def id
@@ -50,10 +57,12 @@ module SimpleMapReduce
         {
            id: id,
            map_script: @map_script,
-           map_class_name: @map_script,
+           map_class_name: @map_class_name,
            reduce_script: @map_script,
            reduce_class_name: @map_script,
-           job_input_file_path: @map_script,
+           job_input_bucket_name: @job_input_bucket_name,
+           job_input_directory_path: @job_input_directory_path,
+           job_output_bucket_name: @job_output_bucket_name,
            job_output_directory_path: @job_output_directory_path,
            status: @status
         }

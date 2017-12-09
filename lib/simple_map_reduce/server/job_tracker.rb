@@ -29,7 +29,9 @@ module SimpleMapReduce
                              map_class_name: params[:map_class_name],
                              reduce_script: params[:reduce_script],
                              reduce_class_name: params[:reduce_class_name],
-                             job_input_file_path: params[:job_input_file_path],
+                             job_input_bucket_name: params[:job_input_bucket_name],
+                             job_input_directory_path: params[:job_input_directory_path],
+                             job_output_bucket_name: params[:job_output_bucket_name],
                              job_output_directory_path: params[:job_output_directory_path],
                              map_worker: worker
                           )
@@ -85,27 +87,34 @@ module SimpleMapReduce
         attr_reader :job_manager
         attr_reader :workers
       
-        def register_job(map_script:, map_class_name:,
-                        reduce_script:, reduce_class_name:,
-                        job_input_file_path:, job_output_directory_path:,
-                       map_worker:)
+        def register_job(map_script:,
+                         map_class_name:,
+                         reduce_script:,
+                         reduce_class_name:,
+                         job_input_bucket_name:,
+                         job_input_directory_path:,
+                         job_output_bucket_name:,
+                         job_output_directory_path:,
+                         map_worker:)
   
           job = ::SimpleMapReduce::Server::Job.new(
                   map_script: map_script,
                   map_class_name: map_class_name,
                   reduce_script: reduce_script,
                   reduce_class_name: reduce_class_name,
-                  job_input_file_path: job_input_file_path,
+                  job_input_directory_path: job_input_directory_path,
+                  job_input_bucket_name: job_input_bucket_name,
+                  job_output_bucket_name: job_output_bucket_name,
                   job_output_directory_path: job_output_directory_path,
                   map_worker: map_worker
                 )
           if @jobs.nil?
             @jobs = {}
           end
-           
+          
           # enqueue job
           job_manager.enqueue_job!('SimpleMapReduce::Worker::RegisterMapTaskWorker', args: job)
-           
+          
           @jobs[job.id] = job
           job
         end

@@ -1,4 +1,5 @@
 require 'rasteira'
+require 'faraday'
 
 require 'simple_map_reduce/version'
 require 'simple_map_reduce/s3_client'
@@ -9,6 +10,7 @@ require 'simple_map_reduce/server/worker'
 require 'simple_map_reduce/server/job_tracker'
 require 'simple_map_reduce/server/job_worker'
 require 'simple_map_reduce/worker/register_map_task_worker'
+require 'simple_map_reduce/worker/run_map_task_worker'
 
 module SimpleMapReduce
   class << self

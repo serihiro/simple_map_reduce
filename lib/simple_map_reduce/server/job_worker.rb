@@ -12,9 +12,11 @@ module SimpleMapReduce
       
       # TODO
       post '/map_tasks' do
-        # receive job
-        # create job
-        # enqueue job
+        raw_body = request.body.read
+        job = SimpleMapReduce::Server::Job.deserialize(raw_body)
+        self.class.job_manager.enqueue_job!(SimpleMapReduce::Worker::RunMapTaskWorker, args: job)
+
+        json({ succeeded: true, id: job.id })
       end
 
       private
@@ -34,7 +36,7 @@ module SimpleMapReduce
         def register_to_job_tracker
           # post job_tracker /worker
         end
-
+        
         def job_manager
           @job_manager ||= ::Rasteira::EmbedWorker::Manager.run
         end

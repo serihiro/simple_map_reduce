@@ -33,10 +33,10 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'bundler', '~> 1.15'
   spec.add_development_dependency 'rake', '~> 10.0'
   spec.add_development_dependency 'rspec', '~> 3.0'
-  spec.add_runtime_dependency 'rasteira', '~> 0.1.1'
+  spec.add_runtime_dependency 'rasteira', '~> 0.1.0'
   spec.add_runtime_dependency 'sinatra', '~> 2.0.0'
   spec.add_runtime_dependency 'sinatra-contrib', '~> 2.0.0'
   spec.add_runtime_dependency 'aws-sdk', '~> 2.10.0'
-  spec.add_runtime_dependency 'msgpack', '~> 1.1.0'
+  spec.add_runtime_dependency 'msgpack', '~> 1.2.0'
   spec.add_runtime_dependency 'faraday', '~> 0.13.0'
 end

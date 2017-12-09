@@ -7,11 +7,12 @@ module SimpleMapReduce
                      request.url('/map_tasks')
                      request.params = { data: job.serialize }
                    end
-        
+
         if response.status != 200
-          SimpleMapReduce::Server::JobTracker.store_worker(client.map_worker)
+          SimpleMapReduce::Server::JobTracker.store_worker(job.map_worker)
           job.failed!
         else
+          job.map_worker.working!
           job.in_process!
         end
       end

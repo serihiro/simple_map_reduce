@@ -15,10 +15,10 @@ module SimpleMapReduce
         logger = Logger.new(STDOUT)
         logger.info(params)
 
-        worker = self.class.fetch_available_worker
-        if worker.nil?
+        map_worker = self.class.fetch_available_workers
+        if map_worker.empty?
           status 409
-          json({succeeded: false, error_message: 'No worker is available now.Try it again.'})
+          json({succeeded: false, error_message: 'No worker is available now. Try it again.'})
           return
         end
 
@@ -33,10 +33,10 @@ module SimpleMapReduce
                              job_input_directory_path: params[:job_input_directory_path],
                              job_output_bucket_name: params[:job_output_bucket_name],
                              job_output_directory_path: params[:job_output_directory_path],
-                             map_worker: worker
+                             map_worker: map_worker
                           )
         rescue => e
-          self.class.store_worker(worker)
+          self.class.store_worker(map_worker)
           status 500
           json({ succeeded: false, error_message: e.message })
           return
@@ -56,7 +56,7 @@ module SimpleMapReduce
       end
       
       get '/jobs' do
-        json(self.class.jobs.values&.map(&:to_h) || [])
+        json(self.class.jobs&.values&.map(&:to_h) || [])
       end
       
       post '/workers' do
@@ -66,12 +66,36 @@ module SimpleMapReduce
       end
       
       get '/workers/:id' do
-        id = params[:id].to_i
-        json({ job: self.class.workers[id].to_h })
+        worker = self.class.workers[params[:id].to_i]
+        if worker.empty?
+          status 404
+          json({ succeeded: false, job: nil })
+        else
+          json({ succeeded: true, job: worker.to_h })
+        end
       end
       
       get '/workers' do
-        json(self.class.workers&.map(&:to_h) || [])
+        json(self.class.workers&.values&.map(&:to_h) || [])
+      end
+      
+      # TODO: be configurable
+      MAX_WORKER_RESERVABLE_SIZE = 5
+      
+      post '/workers/reserve' do
+        params = JSON.parse(request.body.read, symbolize_names: true) rescue {}
+        worker_size = [
+                         (params[:worker_size].to_i.zero? ? 1 : params[:worker_size].to_i.abs),
+                         MAX_WORKER_RESERVABLE_SIZE
+                       ].min
+        begin
+          reserved_workers = self.class.fetch_available_workers(worker_size)
+          json({ succeeded: true, reserved_workers: reserved_workers.map(&:to_h) })
+        rescue => e
+          reserved_workers.each { |reserved_worker| self.class.store_worker(reserved_worker) }
+          status 500
+          json({ succeeded: false, error_message: e.message })
+        end
       end
 
       private
@@ -86,7 +110,7 @@ module SimpleMapReduce
         attr_reader :jobs
         attr_reader :job_manager
         attr_reader :workers
-      
+
         def register_job(map_script:,
                          map_class_name:,
                          reduce_script:,
@@ -121,33 +145,32 @@ module SimpleMapReduce
         
         def register_worker(url:)
           worker = ::SimpleMapReduce::Server::Worker.new(url: url)
-        
-          if @workers.nil?
-            @workers = Set.new
+          if @workers.nik?
+            @workers = {}
           end
           
-          @workers.add(worker)
+          @workers[worker.id] = worker
           worker
         end
         
-        def fetch_available_worker
+        def fetch_available_workers(worker_size = 1)
           mutex.lock
           
-          if @workers.nil?
-            return nil
+          if @workers.nil? || @workers.empty?
+            return []
           end
           
-          ready_workers = @workers.select(&:ready?)
+          ready_workers = @workers.select { |_id, worker| worker.ready? }
           if ready_workers.count > 0
-            selected_worker = ready_workers.last
-            
-            @workers.delete(selected_worker)
-            selected_worker.reserved!
-            @workers.add(selected_worker)
-            
-            selected_worker
+            retry_worker_ids = ready_workers.keys.take(worker_size)
+
+            retry_worker_ids.each do |retry_worker_id|
+              @workers[retry_worker_id].reserved!
+            end
+
+            ready_workers.values
           else
-            return nil
+            return []
           end
         ensure
           mutex.unlock
@@ -155,10 +178,11 @@ module SimpleMapReduce
         
         def store_worker(worker)
           mutex.lock
-
-          @workers.delete(worker)
-          worker.ready!
-          @workers.add(worker)
+          if @workers.nil?
+            @workers = {}
+          end
+          
+          @workers[worker.id].ready!
         ensure
           mutex.unlock
         end

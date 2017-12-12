@@ -1,0 +1,61 @@
+#!/usr/bin/env ruby
+
+require 'bundler/setup'
+require 'simple_map_reduce'
+
+task_script = <<-'EOS'
+  require 'json'
+  class WordCount
+    def reduce(input_io, output_io)
+      output = Hash.new(0)
+      count = 0
+      input_io.each_line(chomp: true, rs: "\n") do |line|
+        input = JSON.parse(line, symbolize_names: true)
+        output[input[:key]] += input[:value]
+        count += 1
+        if count % 100 == 0
+          puts "current count: #{count}"
+        end
+      end
+
+      output.each do |key, value|
+        output_io.puts(JSON.generate(Hash[key, value]))
+      end
+    end
+  end
+EOS
+
+task_class_name = 'WordCount'
+task_input_bucket_name = 'intermediate'
+task_input_file_path = '1513069514_map_output.txt'
+task_output_bucket_name = 'output'
+task_output_directory_path = 'wordcount'
+
+task = ::SimpleMapReduce::Server::Task.new(
+         job_id: 1000,
+         task_class_name: task_class_name,
+         task_script: task_script,
+         task_input_bucket_name: task_input_bucket_name,
+         task_input_file_path: task_input_file_path,
+         task_output_bucket_name: task_output_bucket_name,
+         task_output_directory_path: task_output_directory_path
+       )
+
+url = 'http://localhost:4568'
+http_client = ::Faraday.new(
+                url: url,
+                headers: {
+                            'Accept' => 'application/x-msgpack ',
+                            'Content-Type' => 'application/x-msgpack '
+                          }
+              ) do |faraday|
+                faraday.response :logger
+                faraday.adapter  ::Faraday.default_adapter
+              end
+
+response = http_client.post do |request|
+             request.url('/reduce_tasks')
+             request.body = task.serialize
+           end
+
+puts response.inspect

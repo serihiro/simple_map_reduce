@@ -33,7 +33,7 @@ module SimpleMapReduce
                              job_input_directory_path: params[:job_input_directory_path],
                              job_output_bucket_name: params[:job_output_bucket_name],
                              job_output_directory_path: params[:job_output_directory_path],
-                             map_worker: map_worker
+                             map_worker: map_worker.last
                           )
         rescue => e
           self.class.store_worker(map_worker)
@@ -137,7 +137,7 @@ module SimpleMapReduce
           end
           
           # enqueue job
-          job_manager.enqueue_job!('SimpleMapReduce::Worker::RegisterMapTaskWorker', args: job)
+          job_manager.enqueue_job!(SimpleMapReduce::Worker::RegisterMapTaskWorker, args: job)
           
           @jobs[job.id] = job
           job
@@ -145,7 +145,7 @@ module SimpleMapReduce
         
         def register_worker(url:)
           worker = ::SimpleMapReduce::Server::Worker.new(url: url)
-          if @workers.nik?
+          if @workers.nil?
             @workers = {}
           end
           
@@ -162,13 +162,12 @@ module SimpleMapReduce
           
           ready_workers = @workers.select { |_id, worker| worker.ready? }
           if ready_workers.count > 0
-            retry_worker_ids = ready_workers.keys.take(worker_size)
+            ready_workers = ready_workers.keys.take(worker_size)
 
-            retry_worker_ids.each do |retry_worker_id|
+            ready_workers.map do |retry_worker_id|
               @workers[retry_worker_id].reserved!
+              @workers[retry_worker_id]
             end
-
-            ready_workers.values
           else
             return []
           end

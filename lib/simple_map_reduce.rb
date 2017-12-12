@@ -6,28 +6,22 @@ require 'simple_map_reduce/s3_client'
 require 'simple_map_reduce/driver/config'
 require 'simple_map_reduce/driver/job'
 require 'simple_map_reduce/server/job'
+require 'simple_map_reduce/server/task'
 require 'simple_map_reduce/server/worker'
 require 'simple_map_reduce/server/job_tracker'
 require 'simple_map_reduce/server/job_worker'
 require 'simple_map_reduce/worker/register_map_task_worker'
 require 'simple_map_reduce/worker/run_map_task_worker'
+require 'simple_map_reduce/worker/run_reduce_task_worker'
 
 module SimpleMapReduce
   class << self
-    # see https://github.com/aws/aws-sdk-ruby/blob/master/gems/aws-sdk-s3/lib/aws-sdk-s3/client.rb#L79-L195
-    # for detail of config
-    def config(config)
-      @s3_config = config
-    end
+    # see https://github.com/aws/aws-sdk-ruby/blob/v2.10.100/aws-sdk-resources/lib/aws-sdk-resources/services/s3/encryption/client.rb#L182-L219
+    # for detail of s3_config
+    attr_accessor :s3_config
+    attr_accessor :s3_intermediate_bucket_name
+    attr_accessor :job_tracker_url
   
-    def s3_config
-      @s3_config
-    end
-
-    def s3_config=(s3_config)
-      @s3_config = s3_config
-    end
+    class BaseError < StandardError; end
   end
-  
-  class BaseError < StandardError; end
 end

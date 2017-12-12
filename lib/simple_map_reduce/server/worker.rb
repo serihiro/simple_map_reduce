@@ -1,3 +1,5 @@
+require 'securerandom'
+
 module SimpleMapReduce
   module Server
     class Worker
@@ -27,7 +29,7 @@ module SimpleMapReduce
       end
 
       def id
-        @id ||= self.object_id
+        @id ||= SecureRandom.uuid
       end
       
       def to_h

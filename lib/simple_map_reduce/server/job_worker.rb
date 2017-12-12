@@ -10,13 +10,21 @@ module SimpleMapReduce
         register Sinatra::Reloader
       end
       
-      # TODO
       post '/map_tasks' do
         raw_body = request.body.read
         job = SimpleMapReduce::Server::Job.deserialize(raw_body)
         self.class.job_manager.enqueue_job!(SimpleMapReduce::Worker::RunMapTaskWorker, args: job)
 
-        json({ succeeded: true, id: job.id })
+        json({ succeeded: true, job_id: job.id })
+      end
+      
+      post '/reduce_tasks' do
+        raw_body = request.body.read
+        task = SimpleMapReduce::Server::Task.deserialize(raw_body)
+        
+        self.class.job_manager.enqueue_job!(SimpleMapReduce::Worker::RunReduceTaskWorker, args: task)
+  
+        json({ succeeded: true, job_id: task.job_id, task_id: task.id})
       end
 
       private

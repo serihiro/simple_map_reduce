@@ -1,4 +1,5 @@
 require 'msgpack'
+require 'securerandom'
 
 module SimpleMapReduce
   module Server
@@ -6,7 +7,7 @@ module SimpleMapReduce
       attr_reader :id, :map_script, :map_class_name, :reduce_script, :reduce_class_name,
                   :job_input_bucket_name, :job_input_directory_path,
                   :job_output_bucket_name, :job_output_directory_path,
-                  :map_worker,
+                  :map_worker
                   :status
       STATUS = {
         ready: 0,
@@ -34,6 +35,7 @@ module SimpleMapReduce
                      job_input_directory_path:,
                      job_output_bucket_name:,
                      job_output_directory_path:,
+                     map_worker_url: nil,
                      map_worker: nil,
                      status: nil)
         @id = id
@@ -45,12 +47,12 @@ module SimpleMapReduce
         @job_input_directory_path = job_input_directory_path
         @job_output_bucket_name = job_output_bucket_name
         @job_output_directory_path = job_output_directory_path
-        @map_worker = map_worker
+        @map_worker = map_worker || SimpleMapReduce::Server::Worker.new(url: map_worker_url)
         @status = status || STATUS[:ready]
       end
       
       def id
-        @id ||= self.object_id
+        @id ||= SecureRandom.uuid
       end
       
       def to_h
@@ -58,18 +60,23 @@ module SimpleMapReduce
            id: id,
            map_script: @map_script,
            map_class_name: @map_class_name,
-           reduce_script: @map_script,
-           reduce_class_name: @map_script,
+           reduce_script: @reduce_script,
+           reduce_class_name: @reduce_class_name,
            job_input_bucket_name: @job_input_bucket_name,
            job_input_directory_path: @job_input_directory_path,
            job_output_bucket_name: @job_output_bucket_name,
            job_output_directory_path: @job_output_directory_path,
+           map_worker_url: map_worker_url,
            status: @status
         }
       end
       
       def serialize
         to_h.to_msgpack
+      end
+      
+      def map_worker_url
+        @map_worker&.url
       end
       
       class << self

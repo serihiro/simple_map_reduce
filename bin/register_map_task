@@ -22,9 +22,9 @@ job_input_directory_path = 'input.txt'
 job_input_bucket_name = 'input'
 job_output_directory_path = 'output.txt'
 job_output_bucket_name = 'output'
+map_worker = SimpleMapReduce::Server::Worker.new(url: 'http://localhost:4568')
 
 job = ::SimpleMapReduce::Server::Job.new(
-        id: 1000,
         map_script: map_script,
         map_class_name: map_class_name,
         reduce_script: reduce_script,
@@ -32,7 +32,8 @@ job = ::SimpleMapReduce::Server::Job.new(
         job_input_directory_path: job_input_directory_path,
         job_input_bucket_name: job_input_bucket_name,
         job_output_directory_path: job_output_directory_path,
-        job_output_bucket_name: job_output_bucket_name
+        job_output_bucket_name: job_output_bucket_name,
+        map_worker: map_worker
       )
 
 url = 'http://localhost:4568'

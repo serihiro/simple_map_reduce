@@ -2,10 +2,11 @@ module SimpleMapReduce
   module Worker
     class RegisterMapTaskWorker
       def perform(job)
-        client = http_client(job.map_worker[:url])
+        puts 'register map task worker start!'
+        client = http_client(job.map_worker.url)
         response = client.post do |request|
                      request.url('/map_tasks')
-                     request.params = { data: job.serialize }
+                     request.body = job.serialize
                    end
 
         if response.status != 200
@@ -15,6 +16,9 @@ module SimpleMapReduce
           job.map_worker.working!
           job.in_process!
         end
+      rescue => e
+        puts e.inspect
+        puts e.backtrace.take(10)
       end
 
       private
@@ -23,8 +27,8 @@ module SimpleMapReduce
         ::Faraday.new(
           url: url,
           headers: {
-                      'Accept' => 'application/json',
-                      'Content-Type' => 'application/json'
+                      'Accept' => 'application/x-msgpack',
+                      'Content-Type' => 'application/x-msgpack'
                     }
         ) do |faraday|
           faraday.response :logger

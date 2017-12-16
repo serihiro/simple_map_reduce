@@ -35,6 +35,8 @@ job = ::SimpleMapReduce::Server::Job.new(
         job_output_bucket_name: job_output_bucket_name,
         map_worker: map_worker
       )
+puts job.state
+puts job.start!
 
 url = 'http://localhost:4568'
 http_client = ::Faraday.new(

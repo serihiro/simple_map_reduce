@@ -14,7 +14,7 @@ module SimpleMapReduce
           job.failed!
         else
           job.map_worker.work!
-          job.in_process!
+          job.start!
         end
       rescue => e
         puts e.inspect

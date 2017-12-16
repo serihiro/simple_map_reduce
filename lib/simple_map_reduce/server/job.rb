@@ -1,31 +1,40 @@
 require 'msgpack'
 require 'securerandom'
+require 'forwardable'
+require 'aasm'
 
 module SimpleMapReduce
   module Server
     class Job
+      extend Forwardable
+      include AASM
       attr_reader :id, :map_script, :map_class_name, :reduce_script, :reduce_class_name,
                   :job_input_bucket_name, :job_input_directory_path,
                   :job_output_bucket_name, :job_output_directory_path,
                   :map_worker
-                  :status
-      STATUS = {
-        ready: 0,
-        in_process: 1,
-        succeeded: 2,
-        failed: 3
-      }.freeze
 
-      STATUS.keys.each do |status|
-        define_method "#{status.to_s}!".to_sym do
-          @status = STATUS[status]
+      delegate :current_state => :aasm
+      alias_method :state, :current_state
+      
+      aasm do
+        state :ready, initial: true
+        state :in_process
+        state :succeeded
+        state :failed
+  
+        event :start do
+          transitions from: :ready, to: :in_process
         end
   
-        define_method "#{status.to_s}?".to_sym do
-          @status == STATUS[status]
+        event :succeeded do
+          transitions from: :in_process, to: :succeeded
+        end
+        
+        event :failed do
+          transitions from: :in_process, to: :failed
         end
       end
-    
+
       def initialize(id: nil,
                      map_script:,
                      map_class_name:,
@@ -37,7 +46,8 @@ module SimpleMapReduce
                      job_output_directory_path:,
                      map_worker_url: nil,
                      map_worker: nil,
-                     status: nil)
+                     state: nil)
+                     
         @id = id
         @map_script = map_script
         @map_class_name = map_class_name
@@ -48,7 +58,9 @@ module SimpleMapReduce
         @job_output_bucket_name = job_output_bucket_name
         @job_output_directory_path = job_output_directory_path
         @map_worker = map_worker || SimpleMapReduce::Server::Worker.new(url: map_worker_url)
-        @status = status || STATUS[:ready]
+        unless state.to_s.empty?
+          aasm.current_state = state.to_s
+        end
       end
       
       def id
@@ -67,7 +79,7 @@ module SimpleMapReduce
            job_output_bucket_name: @job_output_bucket_name,
            job_output_directory_path: @job_output_directory_path,
            map_worker_url: map_worker_url,
-           status: @status
+           state: state
         }
       end
       

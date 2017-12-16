@@ -27,23 +27,8 @@ module SimpleMapReduce
         json({ succeeded: true, job_id: task.job_id, task_id: task.id})
       end
 
-      private
-
-      def logger
-        self.class.logger ||= Logger.new(STDOUT)
-      end
-      
       class << self
         attr_accessor :config
-        
-        def setup_worker
-          register_to_job_tracker
-        end
-        
-        # TODO
-        def register_to_job_tracker
-          # post job_tracker /worker
-        end
         
         def job_manager
           @job_manager ||= ::Rasteira::EmbedWorker::Manager.run

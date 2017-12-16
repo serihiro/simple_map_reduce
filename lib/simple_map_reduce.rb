@@ -21,7 +21,15 @@ module SimpleMapReduce
     attr_accessor :s3_config
     attr_accessor :s3_intermediate_bucket_name
     attr_accessor :job_tracker_url
-  
-    class BaseError < StandardError; end
+    
+    def logger=
+      @logger = logger
+    end
+    
+    def logger
+      @logger ||= Logger.new(STDOUT)
+    end
   end
+
+  class BaseError < StandardError; end
 end

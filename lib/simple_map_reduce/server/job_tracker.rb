@@ -12,9 +12,6 @@ module SimpleMapReduce
       
       post '/jobs' do
         params = JSON.parse(request.body.read, symbolize_names: true)
-        logger = Logger.new(STDOUT)
-        logger.info(params)
-
         map_worker = self.class.fetch_available_workers
         if map_worker.empty?
           status 409
@@ -56,6 +53,7 @@ module SimpleMapReduce
       end
       
       get '/jobs' do
+        SimpleMapReduce.logger.info('nyanko')
         json(self.class.jobs&.values&.map(&:to_h) || [])
       end
       
@@ -96,12 +94,6 @@ module SimpleMapReduce
           status 500
           json({ succeeded: false, error_message: e.message })
         end
-      end
-
-      private
-      
-      def logger
-        self.class.logger ||= Logger.new(STDOUT)
       end
       
       class << self

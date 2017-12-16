@@ -13,7 +13,7 @@ module SimpleMapReduce
           SimpleMapReduce::Server::JobTracker.store_worker(job.map_worker)
           job.failed!
         else
-          job.map_worker.working!
+          job.map_worker.work!
           job.in_process!
         end
       rescue => e

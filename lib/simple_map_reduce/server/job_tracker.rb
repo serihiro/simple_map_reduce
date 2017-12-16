@@ -59,6 +59,16 @@ module SimpleMapReduce
       get '/jobs' do
         json(self.class.jobs&.values&.map(&:to_h) || [])
       end
+
+      get '/workers/:id' do
+        worker = self.class.workers[params[:id].to_i]
+        if worker.empty?
+          status 404
+          json({ succeeded: false, job: nil })
+        else
+          json({ succeeded: true, job: worker.to_h })
+        end
+      end
       
       post '/workers' do
         params = JSON.parse(request.body.read, symbolize_names: true)
@@ -66,12 +76,14 @@ module SimpleMapReduce
         json({ succeeded: true, id: job.id })
       end
       
-      get '/workers/:id' do
+      put '/workers/:id' do
         worker = self.class.workers[params[:id].to_i]
         if worker.empty?
           status 404
           json({ succeeded: false, job: nil })
         else
+          params = JSON.parse(request.body.read, symbolize_names: true)
+          worker.update!(params)
           json({ succeeded: true, job: worker.to_h })
         end
       end
@@ -157,7 +169,7 @@ module SimpleMapReduce
             ready_workers = ready_workers.keys.take(worker_size)
 
             ready_workers.map do |retry_worker_id|
-              @workers[retry_worker_id].reserved!
+              @workers[retry_worker_id].reserve
               @workers[retry_worker_id]
             end
           else

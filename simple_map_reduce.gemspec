@@ -39,4 +39,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'aws-sdk', '~> 2.10.0'
   spec.add_runtime_dependency 'msgpack', '~> 1.2.0'
   spec.add_runtime_dependency 'faraday', '~> 0.13.0'
+  spec.add_runtime_dependency 'aasm', '~> 4.12.0'
 end

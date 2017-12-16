@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+
+require 'bundler/setup'
+require 'simple_map_reduce'
+
+config = { access_key_id: 'MINIO_ACCESS_KEY', secret_access_key: 'MINIO_SECRET_KEY',
+           endpoint: 'http://127.0.0.1:9000', region: 'us-east-1', force_path_style: true }
+SimpleMapReduce.s3_config = config
+SimpleMapReduce.s3_intermediate_bucket_name = 'intermediate'
+SimpleMapReduce.job_tracker_url = 'http://localhost:4567'
+SimpleMapReduce.job_worker_url ='http://localhost:4570'
+SimpleMapReduce::Server::JobWorker.run!(port: 4570) do |_server|
+  SimpleMapReduce::Server::JobWorker.setup_worker
+end

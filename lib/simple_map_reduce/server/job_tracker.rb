@@ -6,6 +6,10 @@ require 'sinatra/reloader' if development?
 module SimpleMapReduce
   module Server
     class JobTracker < Sinatra::Base
+      configure do
+        # TODO: be configurable
+        MAX_WORKER_RESERVABLE_SIZE = 5
+      end
       configure :development do
         register Sinatra::Reloader
       end
@@ -53,7 +57,6 @@ module SimpleMapReduce
       end
       
       get '/jobs' do
-        SimpleMapReduce.logger.info('nyanko')
         json(self.class.jobs&.values&.map(&:to_h) || [])
       end
       
@@ -76,9 +79,6 @@ module SimpleMapReduce
       get '/workers' do
         json(self.class.workers&.values&.map(&:to_h) || [])
       end
-      
-      # TODO: be configurable
-      MAX_WORKER_RESERVABLE_SIZE = 5
       
       post '/workers/reserve' do
         params = JSON.parse(request.body.read, symbolize_names: true) rescue {}

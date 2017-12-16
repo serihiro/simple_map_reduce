@@ -9,7 +9,7 @@ module SimpleMapReduce
       configure :development do
         register Sinatra::Reloader
       end
-      
+    
       post '/map_tasks' do
         raw_body = request.body.read
         job = SimpleMapReduce::Server::Job.deserialize(raw_body)
@@ -28,15 +28,28 @@ module SimpleMapReduce
       end
 
       class << self
-        attr_accessor :config
-        
+        def setup_worker
+          register_myself_to_job_tracker
+        end
+
+        def register_myself_to_job_tracker
+          response = http_client.post do |request|
+            request.url('/workers')
+            request.body = { url: SimpleMapReduce.job_worker_url }.to_json
+          end
+  
+          if response.status != 200
+            raise 'failed to setup worker'
+          end
+        end
+  
         def job_manager
           @job_manager ||= ::Rasteira::EmbedWorker::Manager.run
         end
-        
+  
         def http_client
           @http_client ||= ::Faraday.new(
-          url: @config['job_tracker_url'],
+              url: SimpleMapReduce.job_tracker_url,
               headers: {
                   'Accept' => 'application/json',
                   'Content-Type' => 'application/json'

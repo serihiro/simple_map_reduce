@@ -1,7 +1,7 @@
 module SimpleMapReduce
   module Worker
     class RunMapTaskWorker
-      def perform(job)
+      def perform(job, map_worker_id)
         task_wrapper_class_name = "TaskWrapper#{job.id.gsub('-', '')}"
         self.class.class_eval ("class #{task_wrapper_class_name}; end")
         task_wrapper_class = self.class.const_get(task_wrapper_class_name)
@@ -34,24 +34,28 @@ module SimpleMapReduce
         end
         puts '---map output digest---'
         
-        # job_trackerにreduceを実行するworkerのリストをもらうよ
-        client = http_client(SimpleMapReduce.job_tracker_url)
-        response = client.post do |request|
+        response = http_client(SimpleMapReduce.job_tracker_url).post do |request|
           request.url('/workers/reserve')
           # TODO: どうやってreduce workerの数を決めるか
           request.body = { worker_size: 1 }.to_json
         end
         
-        # {"succeeded":true,"reserved_workers":[{"id":70157882164440,"url":"http://localhost:4569","status":1}]}
-        reduce_workers = JSON.parse(response.body, symbolize_names: true)
-        puts reduce_workers
-        if reduce_workers[:reserved_workers].count == 0
+        # {"succeeded":true,"reserved_workers":[{"id":70157882164440,"url":"http://localhost:4569","state":'reserved'}]}
+        reserved_workers = JSON.parse(response.body, symbolize_names: true)[:reserved_workers]
+        if reserved_workers.count == 0
           # 続投
           reduce_worker_url = job.map_worker_url
+          reduce_task_worker_id = map_worker_id
         else
-          reduce_worker_url = reduce_workers[:reserved_workers].first[:url]
+          reduce_worker = reserved_workers.first
+          response = http_client(SimpleMapReduce.job_tracker_url).put do |request|
+            request.url("/workers/#{reduce_worker[:id]}")
+            request.body = { event: 'work' }.to_json
+          end
+          
+          reduce_worker_url = reduce_worker[:url]
+          reduce_task_worker_id = reduce_worker[:id]
         end
-        puts reduce_worker_url
         
         task_script = job.reduce_script
         task_class_name = job.reduce_class_name
@@ -79,13 +83,17 @@ module SimpleMapReduce
         )
         puts 's3 put_object end'
         
-        client = http_client(reduce_worker_url)
-        response = client.post do |request|
+        response = http_client(reduce_worker_url).post do |request|
           request.url('/reduce_tasks')
           request.body = reduce_task.serialize
         end
         
-        puts response.inspect
+        if reduce_task_worker_id != map_worker_id
+          response = http_client(SimpleMapReduce.job_tracker_url).put do |request|
+            request.url("/workers/#{map_worker_id}")
+            request.body = { event: 'ready' }.to_json
+          end
+        end
         
         # TODO: Sort
       rescue => e

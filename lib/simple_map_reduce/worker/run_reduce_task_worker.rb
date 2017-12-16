@@ -1,7 +1,7 @@
 module SimpleMapReduce
   module Worker
     class RunReduceTaskWorker
-      def perform(task)
+      def perform(task, reduce_worker_id)
         task_wrapper_class_name = "TaskWrapper#{task.id.gsub('-', '')}"
         self.class.class_eval ("class #{task_wrapper_class_name}; end")
         task_wrapper_class = self.class.const_get(task_wrapper_class_name)
@@ -32,6 +32,11 @@ module SimpleMapReduce
           bucket: task.task_output_bucket_name,
           key: "#{task.task_output_directory_path}/#{task.job_id}/#{task.id}_reduce_task_output.txt"
         )
+
+        response = http_client(SimpleMapReduce.job_tracker_url).put do |request|
+          request.url("/workers/#{reduce_worker_id}")
+          request.body = { event: 'ready' }.to_json
+        end
       rescue => e
         puts e.inspect
         puts e.backtrace.take(10)

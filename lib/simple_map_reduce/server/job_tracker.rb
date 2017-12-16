@@ -61,8 +61,8 @@ module SimpleMapReduce
       end
 
       get '/workers/:id' do
-        worker = self.class.workers[params[:id].to_i]
-        if worker.empty?
+        worker = self.class.workers[params[:id]]
+        if worker.nil?
           status 404
           json({ succeeded: false, job: nil })
         else
@@ -77,8 +77,8 @@ module SimpleMapReduce
       end
       
       put '/workers/:id' do
-        worker = self.class.workers[params[:id].to_i]
-        if worker.empty?
+        worker = self.class.workers[params[:id]]
+        if worker.nil?
           status 404
           json({ succeeded: false, job: nil })
         else

@@ -10,7 +10,7 @@ module SimpleMapReduce
       include AASM
       
       attr_reader :id
-      attr_reader :url
+      attr_accessor :url
       
       delegate :current_state => :aasm
       alias_method :state, :current_state
@@ -49,11 +49,17 @@ module SimpleMapReduce
         }
       end
       
-      def update!(attributes = {})
-        attributes = attributes.slice(:url, :status)
-        attributes.each_key do |key|
-          next if attributes[key].nil?
-          
+      # update Job
+      # @params [Hash] attributes
+      # @options attributes [String] url
+      # @options attributes [String] event
+      def update!(url: nil, event: nil)
+        if url
+          self.url = url
+        end
+        
+        if event
+          public_send(event.to_sym)
         end
       end
     end

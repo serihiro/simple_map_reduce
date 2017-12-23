@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+
+require 'bundler/setup'
+require 'faker'
+
+base_path = File.realpath('../../examples', __FILE__)
+file = File.open(File.join(base_path, 'wordcount', 'input.txt'), 'w')
+file.write(Faker::Lorem.paragraphs(1_000_000).join("\n"))
+file.close

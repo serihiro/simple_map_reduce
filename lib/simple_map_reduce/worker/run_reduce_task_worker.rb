@@ -12,7 +12,7 @@ module SimpleMapReduce
           puts 'no reduce method'
           return
         end
-        
+
         puts 'reduce task start'
 
         local_input_cache = Tempfile.new
@@ -46,8 +46,6 @@ module SimpleMapReduce
         local_output_cache&.delete
         self.class.send(:remove_const, task_wrapper_class_name.to_sym)
         puts 'reduce task end'
-        
-        # Notify job_tracker
       end
 
       private

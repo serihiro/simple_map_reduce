@@ -12,7 +12,7 @@ module SimpleMapReduce
           return
         end
         puts 'map task start'
-        
+
         local_input_cache = Tempfile.new
         s3_client.get_object(
           response_target: local_input_cache.path,
@@ -20,7 +20,7 @@ module SimpleMapReduce
           key: job.job_input_directory_path
         )
         local_input_cache.rewind
-        
+
         local_output_cache = Tempfile.new
         local_input_cache.each_line(chomp: true, rs: "\n") do |line|
           map_task.map(line, local_output_cache)
@@ -37,58 +37,19 @@ module SimpleMapReduce
         response = http_client(SimpleMapReduce.job_tracker_url).post do |request|
           request.url('/workers/reserve')
           # TODO: どうやってreduce workerの数を決めるか
-          request.body = { worker_size: 1 }.to_json
+          request.body = { worker_size: 2 }.to_json
         end
-        
-        # {"succeeded":true,"reserved_workers":[{"id":70157882164440,"url":"http://localhost:4569","state":'reserved'}]}
+
+        # {"succeeded":true,"workers":[{"id":70157882164440,"url":"http://localhost:4569","state":'reserved'}]}
         reserved_workers = JSON.parse(response.body, symbolize_names: true)[:reserved_workers]
         if reserved_workers.count == 0
           # 続投
-          reduce_worker_url = job.map_worker_url
-          reduce_task_worker_id = map_worker_id
-        else
-          reduce_worker = reserved_workers.first
-          response = http_client(SimpleMapReduce.job_tracker_url).put do |request|
-            request.url("/workers/#{reduce_worker[:id]}")
-            request.body = { event: 'work' }.to_json
-          end
-          
-          reduce_worker_url = reduce_worker[:url]
-          reduce_task_worker_id = reduce_worker[:id]
+          reserved_workers << { id: map_worker_id, url: job.map_worker_url, state: 'working' }
         end
         
-        task_script = job.reduce_script
-        task_class_name = job.reduce_class_name
-        task_input_bucket_name = SimpleMapReduce.s3_intermediate_bucket_name
-        task_input_file_path = "#{job.id}/#{Time.now.to_i}_map_output.txt"
-        task_output_bucket_name = job.job_output_bucket_name
-        task_output_directory_path = job.job_output_directory_path
-
-        reduce_task = ::SimpleMapReduce::Server::Task.new(
-                        job_id: job.id,
-                        task_class_name: task_class_name,
-                        task_script: task_script,
-                        task_input_bucket_name: task_input_bucket_name,
-                        task_input_file_path: task_input_file_path,
-                        task_output_bucket_name: task_output_bucket_name,
-                        task_output_directory_path: task_output_directory_path
-                      )
-
-        puts 's3 put_object start'
-        local_output_cache.rewind
-        s3_client.put_object(
-          body: local_output_cache.read,
-          bucket: reduce_task.task_input_bucket_name,
-          key: reduce_task.task_input_file_path
-        )
-        puts 's3 put_object end'
+        shuffle(job, reserved_workers, local_output_cache)
         
-        response = http_client(reduce_worker_url).post do |request|
-          request.url('/reduce_tasks')
-          request.body = reduce_task.serialize
-        end
-        
-        if reduce_task_worker_id != map_worker_id
+        unless reserved_workers.map { |w| w[:id] }.include?(map_worker_id)
           response = http_client(SimpleMapReduce.job_tracker_url).put do |request|
             request.url("/workers/#{map_worker_id}")
             request.body = { event: 'ready' }.to_json
@@ -103,6 +64,9 @@ module SimpleMapReduce
       ensure
         local_input_cache&.delete
         local_output_cache&.delete
+        reserved_workers.each do |worker|
+          worker[:shuffled_local_output]&.delete
+        end
         self.class.send(:remove_const, task_wrapper_class_name.to_sym)
         puts 'map task end'
       end
@@ -123,6 +87,60 @@ module SimpleMapReduce
         ) do |faraday|
           faraday.response :logger
           faraday.adapter  Faraday.default_adapter
+        end
+      end
+      
+      def shuffle(job, workers, local_output_cache)
+        workers_count = workers.count
+        raise 'No workers' unless workers_count > 0
+
+        workers.each do |worker|
+          worker[:shuffled_local_output] = Tempfile.new
+        end
+
+        local_output_cache.each_line(rs: "\n") do |raw_line|
+          output = JSON.parse(raw_line, symbolize_names: true)
+          partition_id = output[:key].hash % workers_count
+          workers[partition_id][:shuffled_local_output].puts(output.to_json)
+        end
+
+        task_script = job.reduce_script
+        task_class_name = job.reduce_class_name
+        task_input_bucket_name = SimpleMapReduce.s3_intermediate_bucket_name
+        task_output_bucket_name = job.job_output_bucket_name
+        task_output_directory_path = job.job_output_directory_path
+        task_input_file_path_prefix = "#{job.id}/map_output_#{Time.now.to_i}/"
+
+        workers.each_with_index do |worker, partition_id|
+          reduce_task = ::SimpleMapReduce::Server::Task.new(
+            job_id: job.id,
+            task_class_name: task_class_name,
+            task_script: task_script,
+            task_input_bucket_name: task_input_bucket_name,
+            task_input_file_path: "#{task_input_file_path_prefix}#{partition_id}_map_output.txt",
+            task_output_bucket_name: task_output_bucket_name,
+            task_output_directory_path: task_output_directory_path
+          )
+
+          local_output_cache = worker[:shuffled_local_output]
+          local_output_cache.rewind
+          s3_client.put_object(
+            body: local_output_cache.read,
+            bucket: reduce_task.task_input_bucket_name,
+            key: reduce_task.task_input_file_path
+          )
+
+          response = http_client(worker[:url]).post do |request|
+            request.url('/reduce_tasks')
+            request.body = reduce_task.serialize
+          end
+
+          unless worker[:state] == 'working'
+            response = http_client(SimpleMapReduce.job_tracker_url).put do |request|
+              request.url("/workers/#{worker[:id]}")
+              request.body = { event: 'work' }.to_json
+            end
+          end
         end
       end
     end

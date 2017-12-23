@@ -6,6 +6,9 @@ require 'sinatra/reloader' if development?
 module SimpleMapReduce
   module Server
     class JobWorker < Sinatra::Base
+      configure do
+        use Rack::Lock
+      end
       configure :development do
         register Sinatra::Reloader
       end

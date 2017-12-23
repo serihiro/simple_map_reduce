@@ -7,6 +7,7 @@ module SimpleMapReduce
   module Server
     class JobTracker < Sinatra::Base
       configure do
+        use Rack::Lock
         # TODO: be configurable
         MAX_WORKER_RESERVABLE_SIZE = 5
       end
@@ -89,6 +90,7 @@ module SimpleMapReduce
       end
       
       get '/workers' do
+        p request.env
         json(self.class.workers&.values&.map(&:to_h) || [])
       end
       

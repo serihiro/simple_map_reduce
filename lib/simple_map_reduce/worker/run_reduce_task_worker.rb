@@ -33,6 +33,11 @@ module SimpleMapReduce
           key: "#{task.task_output_directory_path}/#{task.job_id}/#{task.id}_reduce_task_output.txt"
         )
 
+        s3_client.delete_object(
+          bucket: task.task_input_bucket_name,
+          key: task.task_input_file_path
+        )
+
         response = http_client(SimpleMapReduce.job_tracker_url).put do |request|
           request.url("/workers/#{reduce_worker_id}")
           request.body = { event: 'ready' }.to_json

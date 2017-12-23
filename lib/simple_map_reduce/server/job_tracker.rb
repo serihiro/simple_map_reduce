@@ -114,6 +114,36 @@ module SimpleMapReduce
         attr_reader :jobs
         attr_reader :job_manager
         attr_reader :workers
+        
+        def setup_job_tracker
+          check_s3_access
+          create_s3_buckets_if_not_existing
+          logger.info('All setup process is done successfully. The job tracker is operation ready.')
+        end
+        
+        def check_s3_access
+          s3_client.list_buckets
+          logger.info('[OK] s3 connection test')
+        end
+        
+        def create_s3_buckets_if_not_existing
+          current_bucket_names = s3_client.list_buckets.buckets.map(&:name)
+          unless current_bucket_names.include?(SimpleMapReduce.s3_input_bucket_name)
+            s3_client.create_bucket(bucket: SimpleMapReduce.s3_input_bucket_name)
+            logger.info("create bucket #{SimpleMapReduce.s3_input_bucket_name}")
+          end
+  
+          unless current_bucket_names.include?(SimpleMapReduce.s3_intermediate_bucket_name)
+            s3_client.create_bucket(bucket: SimpleMapReduce.s3_intermediate_bucket_name)
+            logger.info("create bucket #{SimpleMapReduce.s3_intermediate_bucket_name}")
+          end
+  
+          unless current_bucket_names.include?(SimpleMapReduce.s3_output_bucket_name)
+            s3_client.create_bucket(bucket: SimpleMapReduce.s3_output_bucket_name)
+            logger.info("create bucket #{SimpleMapReduce.s3_output_bucket_name}")
+          end
+          logger.info('[OK] confirmed that all necessary s3 buckets exist')
+        end
 
         def register_job(map_script:,
                          map_class_name:,
@@ -196,6 +226,14 @@ module SimpleMapReduce
         
         def mutex
           @mutex ||= Mutex.new
+        end
+
+        def s3_client
+          SimpleMapReduce::S3Client.instance.client
+        end
+        
+        def logger
+          SimpleMapReduce.logger
         end
       end
     end

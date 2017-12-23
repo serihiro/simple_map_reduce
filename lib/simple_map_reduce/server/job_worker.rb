@@ -31,7 +31,14 @@ module SimpleMapReduce
         attr_accessor :worker_id
       
         def setup_worker
+          check_s3_access
           register_myself_to_job_tracker
+          logger.info('All setup process is done successfully. This worker is operation ready.')
+        end
+        
+        def check_s3_access
+          s3_client.list_buckets
+          logger.info('[OK] s3 connection test')
         end
 
         def register_myself_to_job_tracker
@@ -40,12 +47,9 @@ module SimpleMapReduce
             request.body = { url: SimpleMapReduce.job_worker_url }.to_json
           end
           
-          if response.status != 200
-            raise 'failed to setup worker'
-          end
-
           body = JSON.parse(response.body, symbolize_names: true)
           self.worker_id = body[:id]
+          logger.info("[OK] registering this worker to the job_tracker #{SimpleMapReduce.job_worker_url}")
         end
   
         def job_manager
@@ -63,6 +67,14 @@ module SimpleMapReduce
             faraday.response :raise_error
             faraday.adapter  Faraday.default_adapter
           end
+        end
+
+        def s3_client
+          SimpleMapReduce::S3Client.instance.client
+        end
+
+        def logger
+          SimpleMapReduce.logger
         end
       end
     end

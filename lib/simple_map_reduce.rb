@@ -6,9 +6,11 @@ module SimpleMapReduce
     # see https://github.com/aws/aws-sdk-ruby/blob/v2.10.100/aws-sdk-resources/lib/aws-sdk-resources/services/s3/encryption/client.rb#L182-L219
     # for detail of s3_config
     attr_accessor :s3_config
-    attr_accessor :s3_intermediate_bucket_name
     attr_accessor :job_tracker_url
     attr_accessor :job_worker_url
+    attr_writer :s3_input_bucket_name
+    attr_writer :s3_output_bucket_name
+    attr_writer :s3_intermediate_bucket_name
     
     def logger=
       @logger = logger
@@ -16,6 +18,18 @@ module SimpleMapReduce
     
     def logger
       @logger ||= Logger.new(STDOUT)
+    end
+    
+    def s3_input_bucket_name
+      @s3_input_bucket_name ||= 'input'
+    end
+    
+    def s3_output_bucket_name
+      @s3_output_bucket_name ||= 'output'
+    end
+    
+    def s3_intermediate_bucket_name
+      @s3_intermediate_bucket_name ||= 'intermediate'
     end
   end
 

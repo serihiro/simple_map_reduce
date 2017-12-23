@@ -2,7 +2,7 @@ module SimpleMapReduce
   module Worker
     class RegisterMapTaskWorker
       def perform(job)
-        puts 'register map task worker start!'
+        logger.info('register map task worker start!')
         client = http_client(job.map_worker.url)
         response = client.post do |request|
                      request.url('/map_tasks')
@@ -17,8 +17,8 @@ module SimpleMapReduce
           job.start!
         end
       rescue => e
-        puts e.inspect
-        puts e.backtrace.take(10)
+        logger.error(e.inspect)
+        logger.error(e.backtrace.take(50))
       end
 
       private
@@ -31,9 +31,13 @@ module SimpleMapReduce
                       'Content-Type' => 'application/x-msgpack'
                     }
         ) do |faraday|
-          faraday.response :logger
+          faraday.response :raise_error
           faraday.adapter  Faraday.default_adapter
         end
+      end
+
+      def logger
+        SimpleMapReduce.logger
       end
     end
   end

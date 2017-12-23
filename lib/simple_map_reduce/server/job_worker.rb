@@ -60,7 +60,7 @@ module SimpleMapReduce
                   'Content-Type' => 'application/json'
               }
           ) do |faraday|
-            faraday.response :logger
+            faraday.response :raise_error
             faraday.adapter  Faraday.default_adapter
           end
         end

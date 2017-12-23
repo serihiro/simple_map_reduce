@@ -9,11 +9,11 @@ module SimpleMapReduce
         reduce_task = task_wrapper_class.const_get(task.task_class_name, false).new
         unless reduce_task.respond_to?(:reduce)
           # TODO: notify job_tracker
-          puts 'no reduce method'
+          logger.error('no reduce method')
           return
         end
 
-        puts 'reduce task start'
+        logger.info('reduce task start')
 
         local_input_cache = Tempfile.new
         s3_client.get_object(
@@ -38,20 +38,24 @@ module SimpleMapReduce
           request.body = { event: 'ready' }.to_json
         end
       rescue => e
-        puts e.inspect
-        puts e.backtrace.take(10)
+        logger.error(e.inspect)
+        logger.error(e.backtrace.take(50))
           # TODO: fail処理
       ensure
         local_input_cache&.delete
         local_output_cache&.delete
         self.class.send(:remove_const, task_wrapper_class_name.to_sym)
-        puts 'reduce task end'
+        logger.info('reduce task end')
       end
 
       private
 
       def s3_client
         SimpleMapReduce::S3Client.instance.client
+      end
+
+      def logger
+        SimpleMapReduce.logger
       end
 
       def http_client(url)
@@ -62,7 +66,7 @@ module SimpleMapReduce
                 'Content-Type' => 'application/x-msgpack'
             }
         ) do |faraday|
-          faraday.response :logger
+          faraday.response :raise_error
           faraday.adapter  Faraday.default_adapter
         end
       end

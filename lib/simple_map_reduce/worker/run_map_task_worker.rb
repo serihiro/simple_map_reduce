@@ -9,9 +9,10 @@ module SimpleMapReduce
         map_task = task_wrapper_class.const_get(job.map_class_name, false).new
         unless map_task.respond_to?(:map)
           # TODO: notify job_tracker
+          logger.error('no map method')
           return
         end
-        puts 'map task start'
+        logger.info('map task start')
 
         local_input_cache = Tempfile.new
         s3_client.get_object(
@@ -27,12 +28,12 @@ module SimpleMapReduce
         end
 
         local_output_cache.rewind
-        puts "output data size: #{local_output_cache.size}"
-        puts '---map output digest---'
+        logger.debug("output data size: #{local_output_cache.size}")
+        logger.debug('---map output digest---')
         local_output_cache.take(5).each do |line|
-          puts line
+          logger.debug(line)
         end
-        puts '---map output digest---'
+        logger.debug('---map output digest---')
         
         response = http_client(SimpleMapReduce.job_tracker_url).post do |request|
           request.url('/workers/reserve')
@@ -58,8 +59,8 @@ module SimpleMapReduce
         
         # TODO: Sort
       rescue => e
-        puts e.inspect
-        puts e.backtrace.take(10)
+        logger.error(e.inspect)
+        logger.error(e.backtrace.take(50))
         # TODO: fail処理
       ensure
         local_input_cache&.delete
@@ -68,13 +69,17 @@ module SimpleMapReduce
           worker[:shuffled_local_output]&.delete
         end
         self.class.send(:remove_const, task_wrapper_class_name.to_sym)
-        puts 'map task end'
+        logger.info('map task end')
       end
 
       private
       
       def s3_client
         SimpleMapReduce::S3Client.instance.client
+      end
+      
+      def logger
+        SimpleMapReduce.logger
       end
 
       def http_client(url)
@@ -85,7 +90,7 @@ module SimpleMapReduce
                 'Content-Type' => 'application/x-msgpack'
             }
         ) do |faraday|
-          faraday.response :logger
+          faraday.response :raise_error
           faraday.adapter  Faraday.default_adapter
         end
       end

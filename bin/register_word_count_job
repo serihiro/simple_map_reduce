@@ -10,6 +10,8 @@ map_script = <<-'EOS'
       input_data.split(' ').each do |raw_word|
         word = raw_word.strip
         next if word.empty?
+        word.delete!('_=,.[]()#\'"-=~|&%')
+        word.downcase!
 
         output_io.puts({ key: word, value: 1 }.to_json)
       end

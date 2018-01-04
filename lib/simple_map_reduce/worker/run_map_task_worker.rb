@@ -37,7 +37,7 @@ module SimpleMapReduce
         
         response = http_client(SimpleMapReduce.job_tracker_url).post do |request|
           request.url('/workers/reserve')
-          # TODO: どうやってreduce workerの数を決めるか
+          # TODO: providing a way to specify worker_size
           request.body = { worker_size: 2 }.to_json
         end
 
@@ -56,12 +56,10 @@ module SimpleMapReduce
             request.body = { event: 'ready' }.to_json
           end
         end
-        
-        # TODO: Sort
       rescue => e
         logger.error(e.inspect)
         logger.error(e.backtrace.take(50))
-        # TODO: fail処理
+        # TODO: notifying to job_tracker that this task have failed
       ensure
         local_input_cache&.delete
         local_output_cache&.delete

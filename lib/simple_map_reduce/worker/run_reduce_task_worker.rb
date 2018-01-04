@@ -8,7 +8,7 @@ module SimpleMapReduce
         task_wrapper_class.class_eval(task.task_script)
         reduce_task = task_wrapper_class.const_get(task.task_class_name, false).new
         unless reduce_task.respond_to?(:reduce)
-          # TODO: notify job_tracker
+          # TODO: notifying to job_tracker that this task have failed
           logger.error('no reduce method')
           return
         end
@@ -45,7 +45,7 @@ module SimpleMapReduce
       rescue => e
         logger.error(e.inspect)
         logger.error(e.backtrace.take(50))
-          # TODO: fail処理
+          # TODO: notifying to job_tracker that this task have failed
       ensure
         local_input_cache&.delete
         local_output_cache&.delete

@@ -5,9 +5,9 @@ module SimpleMapReduce
     class RunMapTaskWorker
       def perform(job, map_worker_id)
         task_wrapper_class_name = "TaskWrapper#{job.id.delete('-')}"
-        self.class.class_eval("class #{task_wrapper_class_name}; end", __FILE__, __LINE__)
+        self.class.class_eval("class #{task_wrapper_class_name}; end", 'Task Wrapper Class')
         task_wrapper_class = self.class.const_get(task_wrapper_class_name)
-        task_wrapper_class.class_eval(job.map_script, __FILE__, __LINE__)
+        task_wrapper_class.class_eval(job.map_script, 'Map task script')
         map_task = task_wrapper_class.const_get(job.map_class_name, false).new
         unless map_task.respond_to?(:map)
           # TODO: notify job_tracker
@@ -67,10 +67,12 @@ module SimpleMapReduce
       ensure
         local_input_cache&.delete
         local_output_cache&.delete
-        reserved_workers.each do |worker|
+        reserved_workers&.each do |worker|
           worker[:shuffled_local_output]&.delete
         end
-        self.class.send(:remove_const, task_wrapper_class_name.to_sym)
+        if self.class.const_defined?(task_wrapper_class_name.to_sym)
+          self.class.send(:remove_const, task_wrapper_class_name.to_sym)
+        end
         logger.info('map task end')
       end
 

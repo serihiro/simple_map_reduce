@@ -5,9 +5,9 @@ module SimpleMapReduce
     class RunReduceTaskWorker
       def perform(task, reduce_worker_id)
         task_wrapper_class_name = "TaskWrapper#{task.id.delete('-')}"
-        self.class.class_eval("class #{task_wrapper_class_name}; end", __FILE__, __LINE__)
+        self.class.class_eval("class #{task_wrapper_class_name}; end", 'Task Wrapper Class')
         task_wrapper_class = self.class.const_get(task_wrapper_class_name)
-        task_wrapper_class.class_eval(task.task_script, __FILE__, __LINE__)
+        task_wrapper_class.class_eval(task.task_script, 'Reduce task script')
         reduce_task = task_wrapper_class.const_get(task.task_class_name, false).new
         unless reduce_task.respond_to?(:reduce)
           # TODO: notifying to job_tracker that this task have failed
@@ -52,7 +52,9 @@ module SimpleMapReduce
       ensure
         local_input_cache&.delete
         local_output_cache&.delete
-        self.class.send(:remove_const, task_wrapper_class_name.to_sym)
+        if self.class.const_defined?(task_wrapper_class_name.to_sym)
+          self.class.send(:remove_const, task_wrapper_class_name.to_sym)
+        end
         logger.info('reduce task end')
       end
 

@@ -90,7 +90,6 @@ module SimpleMapReduce
       end
       
       get '/workers' do
-        p request.env
         json(self.class.workers&.values&.map(&:to_h) || [])
       end
       

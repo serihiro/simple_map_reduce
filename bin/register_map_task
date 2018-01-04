@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 require 'bundler/setup'
 require 'simple_map_reduce'
@@ -25,33 +26,33 @@ job_output_bucket_name = 'output'
 map_worker = SimpleMapReduce::Server::Worker.new(url: 'http://localhost:4568')
 
 job = ::SimpleMapReduce::Server::Job.new(
-        map_script: map_script,
-        map_class_name: map_class_name,
-        reduce_script: reduce_script,
-        reduce_class_name: reduce_class_name,
-        job_input_directory_path: job_input_directory_path,
-        job_input_bucket_name: job_input_bucket_name,
-        job_output_directory_path: job_output_directory_path,
-        job_output_bucket_name: job_output_bucket_name,
-        map_worker: map_worker
-      )
+  map_script: map_script,
+  map_class_name: map_class_name,
+  reduce_script: reduce_script,
+  reduce_class_name: reduce_class_name,
+  job_input_directory_path: job_input_directory_path,
+  job_input_bucket_name: job_input_bucket_name,
+  job_output_directory_path: job_output_directory_path,
+  job_output_bucket_name: job_output_bucket_name,
+  map_worker: map_worker
+)
 puts job.state
 puts job.start!
 
 url = 'http://localhost:4568'
 http_client = ::Faraday.new(
-                url: url,
-                headers: {
-                            'Accept' => 'application/x-msgpack ',
-                            'Content-Type' => 'application/x-msgpack '
-                          }
-              ) do |faraday|
-                faraday.response :logger
-                faraday.adapter  ::Faraday.default_adapter
-              end
+  url: url,
+  headers: {
+    'Accept' => 'application/x-msgpack ',
+              'Content-Type' => 'application/x-msgpack '
+  }
+) do |faraday|
+  faraday.response :logger
+  faraday.adapter  ::Faraday.default_adapter
+end
 
 response = http_client.post do |request|
-             request.url('/map_tasks')
-             request.body = job.serialize
-           end
+  request.url('/map_tasks')
+  request.body = job.serialize
+end
 puts response.inspect

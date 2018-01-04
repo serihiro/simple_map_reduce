@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 require 'bundler/setup'
 require 'simple_map_reduce'
@@ -10,5 +11,5 @@ require 'simple_map_reduce'
 # require "pry"
 # Pry.start
 
-require "irb"
+require 'irb'
 IRB.start(__FILE__)

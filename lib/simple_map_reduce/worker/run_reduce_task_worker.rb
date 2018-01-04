@@ -1,11 +1,13 @@
+# frozen_string_literal: true
+
 module SimpleMapReduce
   module Worker
     class RunReduceTaskWorker
       def perform(task, reduce_worker_id)
-        task_wrapper_class_name = "TaskWrapper#{task.id.gsub('-', '')}"
-        self.class.class_eval ("class #{task_wrapper_class_name}; end")
+        task_wrapper_class_name = "TaskWrapper#{task.id.delete('-')}"
+        self.class.class_eval("class #{task_wrapper_class_name}; end", __FILE__, __LINE__)
         task_wrapper_class = self.class.const_get(task_wrapper_class_name)
-        task_wrapper_class.class_eval(task.task_script)
+        task_wrapper_class.class_eval(task.task_script, __FILE__, __LINE__)
         reduce_task = task_wrapper_class.const_get(task.task_class_name, false).new
         unless reduce_task.respond_to?(:reduce)
           # TODO: notifying to job_tracker that this task have failed
@@ -42,10 +44,11 @@ module SimpleMapReduce
           request.url("/workers/#{reduce_worker_id}")
           request.body = { event: 'ready' }.to_json
         end
+        logger.debug(response.body)
       rescue => e
         logger.error(e.inspect)
         logger.error(e.backtrace.take(50))
-          # TODO: notifying to job_tracker that this task have failed
+      # TODO: notifying to job_tracker that this task have failed
       ensure
         local_input_cache&.delete
         local_output_cache&.delete
@@ -70,9 +73,10 @@ module SimpleMapReduce
 
       def http_client(url)
         ::Faraday.new(
-            url: url,
-            headers: HTTP_MSGPACK_HEADER
+          url: url,
+          headers: HTTP_MSGPACK_HEADER
         ) do |faraday|
+          faraday.response :logger
           faraday.response :raise_error
           faraday.adapter  Faraday.default_adapter
         end

@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 require 'bundler/setup'
 require 'simple_map_reduce'
@@ -32,30 +33,30 @@ task_output_bucket_name = 'output'
 task_output_directory_path = 'wordcount'
 
 task = ::SimpleMapReduce::Server::Task.new(
-         job_id: 1000,
-         task_class_name: task_class_name,
-         task_script: task_script,
-         task_input_bucket_name: task_input_bucket_name,
-         task_input_file_path: task_input_file_path,
-         task_output_bucket_name: task_output_bucket_name,
-         task_output_directory_path: task_output_directory_path
-       )
+  job_id: 1000,
+  task_class_name: task_class_name,
+  task_script: task_script,
+  task_input_bucket_name: task_input_bucket_name,
+  task_input_file_path: task_input_file_path,
+  task_output_bucket_name: task_output_bucket_name,
+  task_output_directory_path: task_output_directory_path
+)
 
 url = 'http://localhost:4568'
 http_client = ::Faraday.new(
-                url: url,
-                headers: {
-                            'Accept' => 'application/x-msgpack ',
-                            'Content-Type' => 'application/x-msgpack '
-                          }
-              ) do |faraday|
-                faraday.response :logger
-                faraday.adapter  ::Faraday.default_adapter
-              end
+  url: url,
+  headers: {
+    'Accept' => 'application/x-msgpack ',
+              'Content-Type' => 'application/x-msgpack '
+  }
+) do |faraday|
+  faraday.response :logger
+  faraday.adapter  ::Faraday.default_adapter
+end
 
 response = http_client.post do |request|
-             request.url('/reduce_tasks')
-             request.body = task.serialize
-           end
+  request.url('/reduce_tasks')
+  request.body = task.serialize
+end
 
 puts response.inspect

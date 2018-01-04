@@ -1,11 +1,13 @@
+# frozen_string_literal: true
+
 module SimpleMapReduce
   module Worker
     class RunMapTaskWorker
       def perform(job, map_worker_id)
-        task_wrapper_class_name = "TaskWrapper#{job.id.gsub('-', '')}"
-        self.class.class_eval ("class #{task_wrapper_class_name}; end")
+        task_wrapper_class_name = "TaskWrapper#{job.id.delete('-')}"
+        self.class.class_eval("class #{task_wrapper_class_name}; end", __FILE__, __LINE__)
         task_wrapper_class = self.class.const_get(task_wrapper_class_name)
-        task_wrapper_class.class_eval(job.map_script)
+        task_wrapper_class.class_eval(job.map_script, __FILE__, __LINE__)
         map_task = task_wrapper_class.const_get(job.map_class_name, false).new
         unless map_task.respond_to?(:map)
           # TODO: notify job_tracker
@@ -34,27 +36,29 @@ module SimpleMapReduce
           logger.debug(line)
         end
         logger.debug('---map output digest---')
-        
+
         response = http_client(SimpleMapReduce.job_tracker_url).post do |request|
           request.url('/workers/reserve')
           # TODO: providing a way to specify worker_size
           request.body = { worker_size: 2 }.to_json
         end
+        logger.debug(response.body)
 
         # {"succeeded":true,"workers":[{"id":70157882164440,"url":"http://localhost:4569","state":'reserved'}]}
         reserved_workers = JSON.parse(response.body, symbolize_names: true)[:reserved_workers]
         if reserved_workers.count == 0
-          # 続投
+          # keep working with same worker
           reserved_workers << { id: map_worker_id, url: job.map_worker_url, state: 'working' }
         end
-        
+
         shuffle(job, reserved_workers, local_output_cache)
-        
+
         unless reserved_workers.map { |w| w[:id] }.include?(map_worker_id)
           response = http_client(SimpleMapReduce.job_tracker_url).put do |request|
             request.url("/workers/#{map_worker_id}")
             request.body = { event: 'ready' }.to_json
           end
+          logger.debug(response.body)
         end
       rescue => e
         logger.error(e.inspect)
@@ -71,11 +75,11 @@ module SimpleMapReduce
       end
 
       private
-      
+
       def s3_client
         SimpleMapReduce::S3Client.instance.client
       end
-      
+
       def logger
         SimpleMapReduce.logger
       end
@@ -87,14 +91,15 @@ module SimpleMapReduce
 
       def http_client(url)
         ::Faraday.new(
-            url: url,
-            headers: HTTP_JSON_HEADER
+          url: url,
+          headers: HTTP_JSON_HEADER
         ) do |faraday|
+          faraday.response :logger
           faraday.response :raise_error
           faraday.adapter  Faraday.default_adapter
         end
       end
-      
+
       def shuffle(job, workers, local_output_cache)
         workers_count = workers.count
         raise 'No workers' unless workers_count > 0
@@ -139,13 +144,14 @@ module SimpleMapReduce
             request.url('/reduce_tasks')
             request.body = reduce_task.serialize
           end
+          logger.debug(response.body)
 
-          unless worker[:state] == 'working'
-            response = http_client(SimpleMapReduce.job_tracker_url).put do |request|
-              request.url("/workers/#{worker[:id]}")
-              request.body = { event: 'work' }.to_json
-            end
+          next if worker[:state] == 'working'
+          response = http_client(SimpleMapReduce.job_tracker_url).put do |request|
+            request.url("/workers/#{worker[:id]}")
+            request.body = { event: 'work' }.to_json
           end
+          logger.debug(response.body)
         end
       end
     end

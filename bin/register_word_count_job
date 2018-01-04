@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 require 'bundler/setup'
 require 'simple_map_reduce'
@@ -61,11 +62,11 @@ job = ::SimpleMapReduce::Server::Job.new(
 
 url = 'http://localhost:4567'
 http_client = ::Faraday.new(
-    url: url,
-    headers: {
-        'Accept' => 'application/json ',
-        'Content-Type' => 'application/json'
-    }
+  url: url,
+  headers: {
+    'Accept' => 'application/json ',
+      'Content-Type' => 'application/json'
+  }
 ) do |faraday|
   faraday.response :logger
   faraday.adapter  ::Faraday.default_adapter

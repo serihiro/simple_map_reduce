@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rasteira'
 require 'faraday'
 
@@ -11,23 +13,23 @@ module SimpleMapReduce
     attr_writer :s3_input_bucket_name
     attr_writer :s3_output_bucket_name
     attr_writer :s3_intermediate_bucket_name
-    
+
     def logger=
       @logger = logger
     end
-    
+
     def logger
       @logger ||= Logger.new(STDOUT)
     end
-    
+
     def s3_input_bucket_name
       @s3_input_bucket_name ||= 'input'
     end
-    
+
     def s3_output_bucket_name
       @s3_output_bucket_name ||= 'output'
     end
-    
+
     def s3_intermediate_bucket_name
       @s3_intermediate_bucket_name ||= 'intermediate'
     end

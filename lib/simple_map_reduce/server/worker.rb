@@ -1,20 +1,20 @@
+# frozen_string_literal: true
+
 require 'securerandom'
 require 'forwardable'
 require 'aasm'
-
 
 module SimpleMapReduce
   module Server
     class Worker
       extend Forwardable
       include AASM
-      
-      attr_reader :id
+
       attr_accessor :url
-      
-      delegate :current_state => :aasm
-      alias_method :state, :current_state
-      
+
+      delegate current_state: :aasm
+      alias state current_state
+
       aasm do
         state :ready, initial: true
         state :reserved
@@ -23,11 +23,11 @@ module SimpleMapReduce
         event :ready do
           transitions to: :ready
         end
-        
+
         event :reserve do
           transitions from: %i(ready working), to: :reserved
         end
-        
+
         event :work do
           transitions from: :reserved, to: :working
         end
@@ -40,7 +40,7 @@ module SimpleMapReduce
       def id
         @id ||= SecureRandom.uuid
       end
-      
+
       def to_h
         {
           id: id,
@@ -48,7 +48,7 @@ module SimpleMapReduce
           state: state
         }
       end
-      
+
       # update Job
       # @params [Hash] attributes
       # @options attributes [String] url
@@ -57,7 +57,7 @@ module SimpleMapReduce
         if url
           self.url = url
         end
-        
+
         if event
           public_send(event.to_sym)
         end

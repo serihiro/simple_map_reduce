@@ -63,13 +63,15 @@ module SimpleMapReduce
         SimpleMapReduce.logger
       end
 
+      HTTP_MSGPACK_HEADER = {
+        'Accept' => 'application/x-msgpack',
+        'Content-Type' => 'application/x-msgpack'
+      }.freeze
+
       def http_client(url)
         ::Faraday.new(
             url: url,
-            headers: {
-                'Accept' => 'application/x-msgpack',
-                'Content-Type' => 'application/x-msgpack'
-            }
+            headers: HTTP_MSGPACK_HEADER
         ) do |faraday|
           faraday.response :raise_error
           faraday.adapter  Faraday.default_adapter

@@ -123,6 +123,7 @@ module SimpleMapReduce
         def setup_job_tracker
           check_s3_access
           create_s3_buckets_if_not_existing
+          job_manager
           logger.info('All setup process is done successfully. The job tracker is operation ready.')
         end
 
@@ -239,6 +240,12 @@ module SimpleMapReduce
 
         def logger
           SimpleMapReduce.logger
+        end
+
+        # @override
+        def quit!
+          job_manager.shutdown_workers!
+          super
         end
       end
     end

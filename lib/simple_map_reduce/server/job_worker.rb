@@ -38,6 +38,7 @@ module SimpleMapReduce
         def setup_worker
           check_s3_access
           register_myself_to_job_tracker
+          job_manager
           logger.info('All setup process is done successfully. This worker is operation ready.')
         end
 
@@ -80,6 +81,12 @@ module SimpleMapReduce
 
         def logger
           SimpleMapReduce.logger
+        end
+
+        # @override
+        def quit!
+          job_manager.shutdown_workers!
+          super
         end
       end
     end

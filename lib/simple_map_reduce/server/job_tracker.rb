@@ -125,6 +125,7 @@ module SimpleMapReduce
           create_s3_buckets_if_not_existing
           job_manager
           logger.info('All setup process is done successfully. The job tracker is operation ready.')
+          logger.info("This job tracker url: #{SimpleMapReduce.job_tracker_url}")
         end
 
         def check_s3_access

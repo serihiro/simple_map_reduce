@@ -40,6 +40,8 @@ module SimpleMapReduce
           register_myself_to_job_tracker
           job_manager
           logger.info('All setup process is done successfully. This worker is operation ready.')
+          logger.info("This job worker url: #{SimpleMapReduce.job_worker_url}, id: #{worker_id}")
+          logger.info("The job tracker url: #{SimpleMapReduce.job_tracker_url}")
         end
 
         def check_s3_access

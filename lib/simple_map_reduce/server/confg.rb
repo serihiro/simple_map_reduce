@@ -19,15 +19,23 @@ module SimpleMapReduce
       DEFAULT_SERVER_PORT = 4567
 
       def initialize(options)
-        s3_config = Hash[options[:s3_config].to_a.map { |v| [v[0].to_sym, v[1]] }] # support ruby <= 2.4
-        @s3_config = s3_config.empty? ? DEFAULT_S3_CONFIG : s3_config
+        setup_s3_config(options)
+
         @s3_input_bucket_name = options[:s3_input_bucket_name] || DEFAULT_S3_INPUT_BUCKET_NAME
         @s3_intermediate_bucket_name = options[:s3_intermediate_bucket_name] || DEFAULT_S3_INTERMEDIATE_BUCKET_NAME
         @s3_output_bucket_name = options[:s3_output_bucket_name] || DEFAULT_S3_OUTPUT_BUCKET_NAME
+
         @server_port = options[:server_port] || 4567
-        @logger = options[:logger] || Logger.new(STDOUT)
         @job_tracker_url = options[:job_tracker_url]
         @job_worker_url = options[:job_worker_url]
+        @logger = options[:logger] || Logger.new(STDOUT)
+      end
+
+      private
+
+      def setup_s3_config(options)
+        s3_config = Hash[options[:s3_config].to_a.map { |v| [v[0].to_sym, v[1]] }] # support ruby <= 2.4
+        @s3_config = s3_config.empty? ? DEFAULT_S3_CONFIG : s3_config
       end
     end
   end

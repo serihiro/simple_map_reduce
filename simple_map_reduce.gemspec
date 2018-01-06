@@ -30,6 +30,7 @@ Gem::Specification.new do |spec|
   spec.bindir        = 'exe'
   spec.executables   = spec.files.grep(%r(^exe/)) { |f| File.basename(f) }
   spec.require_paths = ['lib']
+  spec.required_ruby_version = '>= 2.3.0'
 
   spec.add_development_dependency 'bundler', '~> 1.16.0'
   spec.add_development_dependency 'faker'
@@ -43,4 +44,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'rasteira', '~> 0.1.0'
   spec.add_runtime_dependency 'sinatra', '~> 2.0.0'
   spec.add_runtime_dependency 'sinatra-contrib', '~> 2.0.0'
+  spec.add_runtime_dependency 'thor', '~> 0.20.0'
 end

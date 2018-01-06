@@ -65,7 +65,7 @@ http_client = ::Faraday.new(
   url: url,
   headers: {
     'Accept' => 'application/json ',
-      'Content-Type' => 'application/json'
+    'Content-Type' => 'application/json'
   }
 ) do |faraday|
   faraday.response :logger

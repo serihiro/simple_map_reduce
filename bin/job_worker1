@@ -1,19 +1,6 @@
-#!/usr/bin/env ruby
-# frozen_string_literal: true
+#!/bin/bash
 
-require 'bundler/setup'
-require 'simple_map_reduce'
-
-s3_config = { access_key_id: 'MINIO_ACCESS_KEY', secret_access_key: 'MINIO_SECRET_KEY',
-              endpoint: 'http://127.0.0.1:9000', region: 'us-east-1', force_path_style: true }
-
-config = SimpleMapReduce::Server::Config.new(
-  {
-    s3_config: s3_config,
-    s3_intermediate_bucket_name: 'intermediate',
-    server_port: 4568,
-    job_tracker_url: 'http://localhost:4567',
-    job_worker_url: 'http://localhost:4568'
-  }
-)
-SimpleMapReduce::Cli.run_job_worker!(config)
+cd `dirname $0`
+../exe/simple_map_reduce run_job_worker! --job-tracker-url=http://localhost:4567 \
+                                         --job-worker-url=http://localhost:4568 \
+                                         --server-port=4568

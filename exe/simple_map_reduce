@@ -1,0 +1,77 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'bundler/setup'
+require_relative '../lib/simple_map_reduce'
+require 'thor'
+
+module SimpleMapReduce
+  class Cli < ::Thor
+
+    desc 'run_job_tracker!', 'start job_tracker server'
+    method_option :job_tracker_url, type: :string, required: true
+    method_option :server_port, type: :numeric
+    method_option :s3_config, type: :hash
+    method_option :s3_input_bucket_name, type: :string
+    method_option :s3_intermediate_bucket_name, type: :string
+    method_option :s3_output_bucket_name, type: :string
+    def run_job_tracker!
+      opts = Hash[options.to_h.to_a.map { |v| [v[0].to_sym, v[1]] }]
+      config = SimpleMapReduce::Server::Config.new(
+        {
+          job_tracker_url: opts[:job_tracker_url],
+          server_port: opts[:server_port],
+          s3_config: opts[:s3_config],
+          s3_input_bucket_name: opts[:s3_input_bucket_name],
+          s3_intermediate_bucket_name: opts[:s3_intermediate_bucket_name],
+          s3_output_bucket_name: opts[:s3_output_bucket_name]
+        }
+      )
+      assign_config_parameters(config)
+      SimpleMapReduce::Server::JobTracker.run!(port: config.server_port) do
+        SimpleMapReduce::Server::JobTracker.setup_job_tracker
+      end
+    end
+
+    desc 'run_job_worker!!', 'start job_worker server'
+    method_option :job_tracker_url, type: :string, required: true
+    method_option :job_worker_url, type: :string, required: true
+    method_option :server_port, type: :numeric
+    method_option :s3_config, type: :hash
+    method_option :s3_input_bucket_name, type: :string
+    method_option :s3_intermediate_bucket_name, type: :string
+    method_option :s3_output_bucket_name, type: :string
+    def run_job_worker!
+      opts = Hash[options.to_h.to_a.map { |v| [v[0].to_sym, v[1]] }]
+      config = SimpleMapReduce::Server::Config.new(
+        {
+          job_tracker_url: opts[:job_tracker_url],
+          job_worker_url: opts[:job_worker_url],
+          server_port: opts[:server_port],
+          s3_config: opts[:s3_config],
+          s3_input_bucket_name: opts[:s3_input_bucket_name],
+          s3_intermediate_bucket_name: opts[:s3_intermediate_bucket_name],
+          s3_output_bucket_name: opts[:s3_output_bucket_name]
+        }
+      )
+      assign_config_parameters(config)
+      SimpleMapReduce::Server::JobWorker.run!(port: config.server_port) do
+        SimpleMapReduce::Server::JobWorker.setup_worker
+      end
+    end
+
+    private
+
+    def assign_config_parameters(config)
+      SimpleMapReduce.s3_config = config.s3_config
+      SimpleMapReduce.s3_input_bucket_name = config.s3_input_bucket_name
+      SimpleMapReduce.s3_intermediate_bucket_name = config.s3_intermediate_bucket_name
+      SimpleMapReduce.s3_output_bucket_name = config.s3_output_bucket_name
+      SimpleMapReduce.logger = config.logger
+      SimpleMapReduce.job_tracker_url = config.job_tracker_url
+      SimpleMapReduce.job_worker_url = config.job_worker_url
+    end
+  end
+end
+
+SimpleMapReduce::Cli.start

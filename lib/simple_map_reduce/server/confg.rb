@@ -20,7 +20,7 @@ module SimpleMapReduce
 
       def initialize(options)
         s3_config = Hash[options[:s3_config].to_a.map { |v| [v[0].to_sym, v[1]] }] # support ruby <= 2.4
-        @s3_config = s3_config.empty? ? DEFAULT_CONFIG : s3_config
+        @s3_config = s3_config.empty? ? DEFAULT_S3_CONFIG : s3_config
         @s3_input_bucket_name = options[:s3_input_bucket_name] || DEFAULT_S3_INPUT_BUCKET_NAME
         @s3_intermediate_bucket_name = options[:s3_intermediate_bucket_name] || DEFAULT_S3_INTERMEDIATE_BUCKET_NAME
         @s3_output_bucket_name = options[:s3_output_bucket_name] || DEFAULT_S3_OUTPUT_BUCKET_NAME

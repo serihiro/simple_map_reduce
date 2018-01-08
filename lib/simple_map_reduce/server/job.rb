@@ -51,15 +51,20 @@ module SimpleMapReduce
                      state: nil)
 
         @id = id
-        @map_script = map_script
-        @map_class_name = map_class_name
-        @reduce_script = reduce_script
-        @reduce_class_name = reduce_class_name
-        @job_input_bucket_name = job_input_bucket_name
-        @job_input_directory_path = job_input_directory_path
-        @job_output_bucket_name = job_output_bucket_name
-        @job_output_directory_path = job_output_directory_path
-        @map_worker = map_worker || SimpleMapReduce::Server::Worker.new(url: map_worker_url)
+        @map_script = map_script&.strip
+        @map_class_name = map_class_name&.strip
+        @reduce_script = reduce_script&.strip
+        @reduce_class_name = reduce_class_name&.strip
+        @job_input_bucket_name = job_input_bucket_name&.strip
+        @job_input_directory_path = job_input_directory_path&.strip
+        @job_output_bucket_name = job_output_bucket_name&.strip
+        @job_output_directory_path = job_output_directory_path&.strip
+        @map_worker = map_worker
+
+        unless valid?
+          raise ArgumentError, 'invalid Job parameters are detected'
+        end
+
         unless state.to_s.empty?
           aasm.current_state = state.to_s
         end
@@ -80,7 +85,6 @@ module SimpleMapReduce
           job_input_directory_path: @job_input_directory_path,
           job_output_bucket_name: @job_output_bucket_name,
           job_output_directory_path: @job_output_directory_path,
-          map_worker_url: map_worker_url,
           state: state
         }
       end
@@ -91,6 +95,17 @@ module SimpleMapReduce
 
       def map_worker_url
         @map_worker&.url
+      end
+
+      def valid?
+        !@map_script.to_s.empty? &&
+          !@map_class_name.to_s.empty? &&
+          !@reduce_script.to_s.empty? &&
+          !@reduce_class_name.to_s.empty? &&
+          !@job_input_bucket_name.to_s.empty? &&
+          !@job_input_directory_path.to_s.empty? &&
+          !@job_output_bucket_name.to_s.empty? &&
+          !@job_output_directory_path.to_s.empty?
       end
 
       class << self

@@ -19,14 +19,15 @@ module SimpleMapReduce
 
       post '/jobs' do
         params = JSON.parse(request.body.read, symbolize_names: true)
-        map_worker = self.class.fetch_available_workers
-        if map_worker.empty?
+        available_workers = self.class.fetch_available_workers
+        if available_workers.empty?
           status 409
           json(succeeded: false, error_message: 'No worker is available now. Try it again.')
           return
         end
 
         registered_job = nil
+        selected_map_worker = available_workers.last
         begin
           registered_job = self.class.register_job(
             map_script: params[:map_script],
@@ -37,12 +38,27 @@ module SimpleMapReduce
             job_input_directory_path: params[:job_input_directory_path],
             job_output_bucket_name: params[:job_output_bucket_name],
             job_output_directory_path: params[:job_output_directory_path],
-            map_worker: map_worker.last
+            map_worker: selected_map_worker
           )
+        rescue ArgumentError => e
+          status 400
+          json(succeeded: false, error_message: e.message)
+          begin
+            self.class.store_worker(selected_map_worker)
+          rescue => store_worker_error
+            logger.error("failed to store_worker: `#{store_worker_error.inspect}`")
+          end
+
+          return
         rescue => e
-          self.class.store_worker(map_worker)
           status 500
           json(succeeded: false, error_message: e.message)
+          begin
+            self.class.store_worker(selected_map_worker)
+          rescue => store_worker_error
+            logger.error("failed to store_worker: `#{store_worker_error.inspect}`")
+          end
+
           return
         end
 
@@ -50,7 +66,7 @@ module SimpleMapReduce
       end
 
       get '/jobs/:id' do
-        job = self.class.jobs&.[](params[:id].to_i)
+        job = self.class.jobs&.[](params[:id])
         if job.nil?
           status 404
           json(succeeded: false, error_message: 'job not found')
@@ -67,16 +83,25 @@ module SimpleMapReduce
         worker = self.class.workers[params[:id]]
         if worker.nil?
           status 404
-          json(succeeded: false, job: nil)
+          json(succeeded: false, worker: nil)
         else
-          json(succeeded: true, job: worker.to_h)
+          json(succeeded: true, worker: worker.to_h)
         end
       end
 
       post '/workers' do
         params = JSON.parse(request.body.read, symbolize_names: true)
-        job = self.class.register_worker(url: params[:url])
-        json(succeeded: true, id: job.id)
+
+        worker = nil
+        begin
+          worker = self.class.register_worker(url: params[:url])
+        rescue => e
+          status 400
+          json(succeeded: false, error_class: e.class.to_s, error_message: e.message)
+          return
+        end
+
+        json(succeeded: true, id: worker.id)
       end
 
       put '/workers/:id' do
@@ -84,10 +109,16 @@ module SimpleMapReduce
         if worker.nil?
           status 404
           json(succeeded: false, job: nil)
-        else
+          return
+        end
+
+        begin
           params = JSON.parse(request.body.read, symbolize_names: true)
           worker.update!(params)
-          json(succeeded: true, job: worker.to_h)
+          json(succeeded: true, worker: worker.to_h)
+        rescue => e
+          status 400
+          json(succeeded: false, error_class: e.class.to_s, error_message: e.message)
         end
       end
 

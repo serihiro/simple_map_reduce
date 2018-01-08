@@ -35,6 +35,9 @@ module SimpleMapReduce
 
       def initialize(url:)
         @url = url
+        unless valid?
+          raise ArgumentError, 'invalid url'
+        end
       end
 
       def id
@@ -61,6 +64,12 @@ module SimpleMapReduce
         if event
           public_send(event.to_sym)
         end
+      end
+
+      private
+
+      def valid?
+        !@url.to_s.empty? && @url =~ URI::regexp
       end
     end
   end

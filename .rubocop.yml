@@ -58,3 +58,12 @@ Metrics/AbcSize:
 
 Metrics/ParameterLists:
   Enabled: false
+
+Lint/AmbiguousBlockAssociation:
+  Enabled: false
+
+Metrics/CyclomaticComplexity:
+  Max: 10
+
+Metrics/PerceivedComplexity:
+  Max: 10

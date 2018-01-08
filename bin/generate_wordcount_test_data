@@ -3,8 +3,17 @@
 
 require 'bundler/setup'
 require 'faker'
+require 'thor'
 
-base_path = File.realpath('../../examples', __FILE__)
-file = File.open(File.join(base_path, 'wordcount', 'input.txt'), 'w')
-file.write(Faker::Lorem.paragraphs(1_000_000).join("\n"))
-file.close
+class WordCountTestDataGenerator < Thor
+  desc 'generate', 'generate test data'
+  method_option :count, type: :numeric, default: 1000, desc: 'The number of line count you want'
+  def generate
+    base_path = File.realpath('../../examples', __FILE__)
+    file = File.open(File.join(base_path, 'wordcount', 'input.txt'), 'w')
+    file.write(Faker::Lorem.paragraphs(options[:count]).join("\n"))
+    file.close
+  end
+end
+
+WordCountTestDataGenerator.start

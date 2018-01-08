@@ -15,8 +15,6 @@ module SimpleMapReduce
     attr_accessor :s3_intermediate_bucket_name
     attr_accessor :logger
   end
-
-  class BaseError < StandardError; end
 end
 
 require 'simple_map_reduce/version'

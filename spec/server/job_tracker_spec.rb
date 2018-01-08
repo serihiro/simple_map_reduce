@@ -125,7 +125,7 @@ RSpec.describe SimpleMapReduce::Server::JobTracker do
           expect do
             subject
           end.to change { SimpleMapReduce::Server::JobTracker.instance_variable_get(:@jobs).values.last.state }
-                   .from(:ready).to(:in_process)
+            .from(:ready).to(:in_process)
         end
       end
 
@@ -286,7 +286,7 @@ RSpec.describe SimpleMapReduce::Server::JobTracker do
           expect do
             subject
           end.to change { SimpleMapReduce::Server::JobTracker.instance_variable_get(:@workers).values.last.state }
-                   .from(:ready).to(:reserved)
+            .from(:ready).to(:reserved)
         end
       end
 
@@ -384,7 +384,7 @@ RSpec.describe SimpleMapReduce::Server::JobTracker do
   end
 
   describe '#get /workers' do
-    subject { get("/workers", nil, 'CONTENT_TYPE' => 'application/json') }
+    subject { get('/workers', nil, 'CONTENT_TYPE' => 'application/json') }
 
     context 'when there are some workers' do
       before :each do

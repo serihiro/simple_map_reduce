@@ -69,7 +69,7 @@ module SimpleMapReduce
       private
 
       def valid?
-        !@url.to_s.empty? && @url =~ URI::regexp
+        !@url.to_s.empty? && @url =~ URI::DEFAULT_PARSER.make_regexp
       end
     end
   end

@@ -267,6 +267,7 @@ module SimpleMapReduce
 
         def store_worker(worker)
           mutex.lock
+
           if @workers.nil?
             @workers = {}
           end

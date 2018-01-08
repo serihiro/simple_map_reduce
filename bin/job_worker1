@@ -1,6 +1,22 @@
 #!/bin/bash
 
 cd `dirname $0`
-../exe/simple_map_reduce run_job_worker! --job-tracker-url=http://localhost:4567 \
-                                         --job-worker-url=http://localhost:4568 \
-                                         --server-port=4568
+if [ "$USE_DOCKER" == "" ];then
+  job_tracker_url="http://localhost:4567"
+  job_worker_url="http://localhost:4568"
+  s3_endpoint="http://localhost:9000"
+else
+  job_tracker_url="http://job_tracker:4567"
+  job_worker_url="http://job_worker1:4568"
+  s3_endpoint="http://minio:9000"
+fi
+
+../exe/simple_map_reduce run_job_worker! \
+  --job-tracker-url=`echo $job_tracker_url` \
+  --job-worker-url=`echo $job_worker_url` \
+  --server-port=4568 \
+  --s3_config=access_key_id:'MINIO_ACCESS_KEY' \
+              secret_access_key:'MINIO_SECRET_KEY' \
+              endpoint:`echo $s3_endpoint` \
+              region:'us-east-1' \
+              force_path_style:true

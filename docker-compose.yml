@@ -1,0 +1,98 @@
+version: '2'
+services:
+  job_tracker:
+    build: .
+    volumes:
+      - ./bin:/app/bin
+      - ./examples:/app/examples
+      - ./exe:/app/exe
+      - ./lib:/app/lib
+      - ./spec:/app/spec
+      - ./Gemfile:/app/Gemfile
+      - ./Rakefile:/app/Rakefile
+      - ./simple_map_reduce.gemspec:/app/simple_map_reduce.gemspec
+      - ./.gitignore:/app/.gitignore
+      - ./.rspec:/app/.rspec
+      - ./.rubocop.yml:/app/.rubocop.yml
+    ports:
+      - '4567:4567'
+    links:
+      - minio
+    environment:
+      USE_DOCKER: 'true'
+    command: bash -c "bin/job_tracker"
+  job_worker1:
+    build: .
+    volumes:
+      - ./bin:/app/bin
+      - ./examples:/app/examples
+      - ./exe:/app/exe
+      - ./lib:/app/lib
+      - ./spec:/app/spec
+      - ./Gemfile:/app/Gemfile
+      - ./Rakefile:/app/Rakefile
+      - ./simple_map_reduce.gemspec:/app/simple_map_reduce.gemspec
+      - ./.gitignore:/app/.gitignore
+      - ./.rspec:/app/.rspec
+      - ./.rubocop.yml:/app/.rubocop.yml
+    ports:
+      - '4568:4568'
+    links:
+      - job_tracker
+      - minio
+    environment:
+      USE_DOCKER: 'true'
+    command: bash -c "bin/job_worker1"
+  job_worker2:
+    build: .
+    volumes:
+      - ./bin:/app/bin
+      - ./examples:/app/examples
+      - ./exe:/app/exe
+      - ./lib:/app/lib
+      - ./spec:/app/spec
+      - ./Gemfile:/app/Gemfile
+      - ./Rakefile:/app/Rakefile
+      - ./simple_map_reduce.gemspec:/app/simple_map_reduce.gemspec
+      - ./.gitignore:/app/.gitignore
+      - ./.rspec:/app/.rspec
+      - ./.rubocop.yml:/app/.rubocop.yml
+    ports:
+      - '4569:4569'
+    environment:
+      USE_DOCKER: 'true'
+    links:
+      - job_tracker
+      - minio
+    command: bash -c "bin/job_worker2"
+  job_worker3:
+    build: .
+    volumes:
+      - ./bin:/app/bin
+      - ./examples:/app/examples
+      - ./exe:/app/exe
+      - ./lib:/app/lib
+      - ./spec:/app/spec
+      - ./Gemfile:/app/Gemfile
+      - ./Rakefile:/app/Rakefile
+      - ./simple_map_reduce.gemspec:/app/simple_map_reduce.gemspec
+      - ./.gitignore:/app/.gitignore
+      - ./.rspec:/app/.rspec
+      - ./.rubocop.yml:/app/.rubocop.yml
+    ports:
+      - '4570:4570'
+    environment:
+      USE_DOCKER: 'true'
+    links:
+      - job_tracker
+      - minio
+    command: bash -c "bin/job_worker3"
+  minio:
+    image: minio/minio
+    ports:
+      - '9000:9000'
+    environment:
+      - 'MINIO_ACCESS_KEY=MINIO_ACCESS_KEY'
+      - 'MINIO_SECRET_KEY=MINIO_SECRET_KEY'
+      - 'MINIO_REGION=us-east-1'
+    command: server /export

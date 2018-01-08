@@ -44,7 +44,7 @@ module SimpleMapReduce
         @id ||= SecureRandom.uuid
       end
 
-      def to_h
+      def dump
         {
           id: id,
           url: @url,

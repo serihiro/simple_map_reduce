@@ -6,25 +6,34 @@ require 'securerandom'
 module SimpleMapReduce
   module Server
     class Task
+      extend Forwardable
+      include AASM
+
       attr_reader :job_id,
                   :task_class_name, :task_script,
                   :task_input_bucket_name, :task_input_file_path,
                   :task_output_bucket_name, :task_output_directory_path,
-                  :worker, :status
-      STATUS = {
-        ready: 0,
-        in_process: 1,
-        succeeded: 2,
-        failed: 3
-      }.freeze
+                  :worker
 
-      STATUS.each_key do |status|
-        define_method "#{status}!".to_sym do
-          @status = STATUS[status]
+      delegate current_state: :aasm
+      alias state current_state
+
+      aasm do
+        state :ready, initial: true
+        state :in_process
+        state :succeeded
+        state :failed
+
+        event :start do
+          transitions ready: :in_process
         end
 
-        define_method "#{status}?".to_sym do
-          @status == STATUS[status]
+        event :succeed do
+          transitions from: :in_process, to: :succeeded
+        end
+
+        event :fail do
+          transitions from: :in_process, to: :failed
         end
       end
 
@@ -36,8 +45,7 @@ module SimpleMapReduce
                      task_input_file_path:,
                      task_output_bucket_name:,
                      task_output_directory_path:,
-                     worker: nil,
-                     status: nil)
+                     worker: nil)
         @id = id
         @job_id = job_id
         @task_class_name = task_class_name
@@ -47,7 +55,6 @@ module SimpleMapReduce
         @task_output_bucket_name = task_output_bucket_name
         @task_output_directory_path = task_output_directory_path
         @worker = worker
-        @status = status || STATUS[:ready]
       end
 
       def id
@@ -69,6 +76,10 @@ module SimpleMapReduce
 
       def serialize
         to_h.to_msgpack
+      end
+
+      def dump
+        to_h.merge(state: state)
       end
 
       class << self

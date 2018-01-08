@@ -71,12 +71,12 @@ module SimpleMapReduce
           status 404
           json(succeeded: false, error_message: 'job not found')
         else
-          json(job: job.to_h)
+          json(job: job.dump)
         end
       end
 
       get '/jobs' do
-        json(self.class.jobs&.values&.map(&:to_h) || [])
+        json(self.class.jobs&.values&.map(&:dump) || [])
       end
 
       get '/workers/:id' do
@@ -85,7 +85,7 @@ module SimpleMapReduce
           status 404
           json(succeeded: false, worker: nil)
         else
-          json(succeeded: true, worker: worker.to_h)
+          json(succeeded: true, worker: worker.dump)
         end
       end
 
@@ -115,7 +115,7 @@ module SimpleMapReduce
         begin
           params = JSON.parse(request.body.read, symbolize_names: true)
           worker.update!(params)
-          json(succeeded: true, worker: worker.to_h)
+          json(succeeded: true, worker: worker.dump)
         rescue => e
           status 400
           json(succeeded: false, error_class: e.class.to_s, error_message: e.message)
@@ -123,7 +123,7 @@ module SimpleMapReduce
       end
 
       get '/workers' do
-        json(self.class.workers&.values&.map(&:to_h) || [])
+        json(self.class.workers&.values&.map(&:dump) || [])
       end
 
       post '/workers/reserve' do
@@ -138,7 +138,7 @@ module SimpleMapReduce
         ].min
         begin
           reserved_workers = self.class.fetch_available_workers(worker_size)
-          json(succeeded: true, reserved_workers: reserved_workers.map(&:to_h))
+          json(succeeded: true, reserved_workers: reserved_workers.map(&:dump))
         rescue => e
           reserved_workers.each { |reserved_worker| self.class.store_worker(reserved_worker) }
           status 500

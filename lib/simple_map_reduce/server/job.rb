@@ -110,6 +110,15 @@ module SimpleMapReduce
           !@job_output_directory_path.to_s.empty?
       end
 
+      # update Job
+      # @params [Hash] attributes
+      # @options attributes [String] event
+      def update!(event: nil)
+        if event
+          public_send(event.to_sym)
+        end
+      end
+
       class << self
         def deserialize(data)
           new(Hash[MessagePack.unpack(data).map { |k, v| [k.to_sym, v] }])

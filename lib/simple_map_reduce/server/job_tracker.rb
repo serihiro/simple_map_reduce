@@ -65,6 +65,24 @@ module SimpleMapReduce
         json(succeeded: true, id: registered_job.id)
       end
 
+      put '/jobs/:id' do
+        job = self.class.jobs&.[](params[:id])
+        if job.nil?
+          status 404
+          json(succeeded: false, error_message: 'job not found')
+          return
+        end
+
+        begin
+          attrs = JSON.parse(request.body.read, symbolize_names: true)
+          job.update!(attrs)
+          json(succeeded: true, job: job.dump)
+        rescue => e
+          status 400
+          json(succeeded: false, error_class: e.class.to_s, error_message: e.message)
+        end
+      end
+
       get '/jobs/:id' do
         job = self.class.jobs&.[](params[:id])
         if job.nil?
@@ -113,8 +131,8 @@ module SimpleMapReduce
         end
 
         begin
-          params = JSON.parse(request.body.read, symbolize_names: true)
-          worker.update!(params)
+          attrs = JSON.parse(request.body.read, symbolize_names: true)
+          worker.update!(attrs)
           json(succeeded: true, worker: worker.dump)
         rescue => e
           status 400

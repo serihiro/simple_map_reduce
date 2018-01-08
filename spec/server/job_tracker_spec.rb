@@ -98,6 +98,54 @@ RSpec.describe SimpleMapReduce::Server::JobTracker do
     end
   end
 
+  describe '#put /jobs/:id' do
+    subject { put("/jobs/#{job_id}", params.to_json, 'CONTENT_TYPE' => 'application/json') }
+
+    context 'when the specified job exists' do
+      before :each do
+        @job = build(:job)
+        jobs = { @job.id => @job }
+        SimpleMapReduce::Server::JobTracker.instance_variable_set(:@jobs, jobs)
+      end
+      let(:job_id) { @job.id }
+
+      context 'with valid params' do
+        let(:params) { { event: 'start!' } }
+
+        it 'responds 200' do
+          expect(subject.status).to eq 200
+        end
+
+        it 'responds job' do
+          body = JSON.parse(subject.body, symbolize_names: true)
+          expect(body[:job][:id]).to eq @job.id
+        end
+
+        it 'updates job status' do
+          expect do
+            subject
+          end.to change { SimpleMapReduce::Server::JobTracker.instance_variable_get(:@jobs).values.last.state }
+                   .from(:ready).to(:in_process)
+        end
+      end
+
+      context 'with invalid params' do
+        let(:params) { { event: 'nyaun-nyaun' } }
+        it 'responds 400' do
+          expect(subject.status).to eq 400
+        end
+      end
+    end
+
+    context 'when the specified job does not exist' do
+      let(:job_id) { 'kagamin' }
+      let(:params) { { event: 'start!' } }
+      it 'responds 404' do
+        expect(subject.status).to eq 404
+      end
+    end
+  end
+
   describe '#get /jobs/:id' do
     subject { get("/jobs/#{job_id}", nil, 'CONTENT_TYPE' => 'application/json') }
 

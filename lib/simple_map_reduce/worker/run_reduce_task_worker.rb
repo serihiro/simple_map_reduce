@@ -40,21 +40,30 @@ module SimpleMapReduce
           key: task.task_input_file_path
         )
 
-        response = http_client(SimpleMapReduce.job_tracker_url).put do |request|
-          request.url("/workers/#{reduce_worker_id}")
-          request.body = { event: 'ready' }.to_json
-        end
-        logger.debug(response.body)
+        # TODO: Notify the task succeeded
       rescue => e
         logger.error(e.inspect)
         logger.error(e.backtrace.take(50))
-      # TODO: notifying to job_tracker that this task have failed
+
+        # TODO: Notify the task failed
       ensure
         local_input_cache&.delete
         local_output_cache&.delete
         if self.class.const_defined?(task_wrapper_class_name.to_sym)
           self.class.send(:remove_const, task_wrapper_class_name.to_sym)
         end
+
+        begin
+          response = http_client(SimpleMapReduce.job_tracker_url).put do |request|
+            request.url("/workers/#{reduce_worker_id}")
+            request.body = { event: 'ready' }.to_json
+          end
+          logger.debug(response.body)
+        rescue => notify_error
+          logger.fatal(notify_error.inspect)
+          logger.fatal(notify_error.backtrace.take(50))
+        end
+
         logger.info('reduce task end')
       end
 

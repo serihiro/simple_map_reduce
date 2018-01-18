@@ -3,6 +3,8 @@
 module SimpleMapReduce
   module Worker
     class RunMapTaskWorker
+      class InvalidMapTaskError < StandardError; end
+
       def perform(job, map_worker_id)
         task_wrapper_class_name = "TaskWrapper#{job.id.delete('-')}"
         self.class.class_eval("class #{task_wrapper_class_name}; end", 'Task Wrapper Class')
@@ -10,9 +12,7 @@ module SimpleMapReduce
         task_wrapper_class.class_eval(job.map_script, 'Map task script')
         map_task = task_wrapper_class.const_get(job.map_class_name, false).new
         unless map_task.respond_to?(:map)
-          # TODO: notify job_tracker
-          logger.error('no map method')
-          return
+          raise InvalidMapTaskError, 'no map method'
         end
         logger.info('map task start')
 
@@ -63,6 +63,7 @@ module SimpleMapReduce
       rescue => e
         logger.error(e.inspect)
         logger.error(e.backtrace.take(50))
+        job.failed!
         # TODO: notifying to job_tracker that this task have failed
       ensure
         local_input_cache&.delete

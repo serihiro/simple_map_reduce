@@ -19,6 +19,8 @@ module SimpleMapReduce
       alias state current_state
 
       aasm do
+        after_all_transitions :save_state
+
         state :ready, initial: true
         state :in_process
         state :succeeded
@@ -47,7 +49,8 @@ module SimpleMapReduce
                      job_output_bucket_name:,
                      job_output_directory_path:,
                      map_worker_url: nil,
-                     map_worker: nil)
+                     map_worker: nil,
+                     data_store_type: 'default')
 
         @id = id
         @map_script = map_script&.strip
@@ -62,6 +65,8 @@ module SimpleMapReduce
         if @map_worker.nil? && map_worker_url
           @map_worker = SimpleMapReduce::Server::Worker.new(url: map_worker_url)
         end
+        @data_store = SimpleMapReduce::DataStoreFactory.create(data_store_type,
+                                                               resource_name: 'jobs', resource_id: @id)
 
         unless valid?
           raise ArgumentError, 'invalid Job parameters are detected'
@@ -121,8 +126,16 @@ module SimpleMapReduce
 
       class << self
         def deserialize(data)
-          new(Hash[MessagePack.unpack(data).map { |k, v| [k.to_sym, v] }])
+          params = Hash[MessagePack.unpack(data).map { |k, v| [k.to_sym, v] }]
+          params[:data_store_type] = 'remote'
+          new(params)
         end
+      end
+
+      private
+
+      def save_state
+        @data_store.save_state(aasm.current_event)
       end
     end
   end

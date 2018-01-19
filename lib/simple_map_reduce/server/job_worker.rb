@@ -18,7 +18,15 @@ module SimpleMapReduce
       post '/map_tasks' do
         raw_body = request.body.read
         job = SimpleMapReduce::Server::Job.deserialize(raw_body)
-        self.class.job_manager.enqueue_job!(SimpleMapReduce::Worker::RunMapTaskWorker, args: [job, self.class.worker_id])
+        worker = SimpleMapReduce::Server::Worker.new(
+          id: self.class.worker_id,
+          url: SimpleMapReduce.job_worker_url,
+          state: :reserved,
+          data_store_type: 'remote'
+        )
+        worker.work!
+        job.start!
+        self.class.job_manager.enqueue_job!(SimpleMapReduce::Worker::RunMapTaskWorker, args: [job, worker])
 
         json(succeeded: true, job_id: job.id)
       end
@@ -26,8 +34,14 @@ module SimpleMapReduce
       post '/reduce_tasks' do
         raw_body = request.body.read
         task = SimpleMapReduce::Server::Task.deserialize(raw_body)
-
-        self.class.job_manager.enqueue_job!(SimpleMapReduce::Worker::RunReduceTaskWorker, args: [task, self.class.worker_id])
+        worker = SimpleMapReduce::Server::Worker.new(
+          id: self.class.worker_id,
+          url: SimpleMapReduce.job_worker_url,
+          state: :reserved,
+          data_store_type: 'remote'
+        )
+        worker.work!
+        self.class.job_manager.enqueue_job!(SimpleMapReduce::Worker::RunReduceTaskWorker, args: [task, worker])
 
         json(succeeded: true, job_id: task.job_id, task_id: task.id)
       end

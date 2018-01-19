@@ -3,16 +3,16 @@
 module SimpleMapReduce
   module Worker
     class RunMapTaskWorker
-      def perform(job, map_worker_id)
+      class InvalidMapTaskError < StandardError; end
+
+      def perform(job, map_worker)
         task_wrapper_class_name = "TaskWrapper#{job.id.delete('-')}"
         self.class.class_eval("class #{task_wrapper_class_name}; end", 'Task Wrapper Class')
         task_wrapper_class = self.class.const_get(task_wrapper_class_name)
         task_wrapper_class.class_eval(job.map_script, 'Map task script')
         map_task = task_wrapper_class.const_get(job.map_class_name, false).new
         unless map_task.respond_to?(:map)
-          # TODO: notify job_tracker
-          logger.error('no map method')
-          return
+          raise InvalidMapTaskError, 'no map method'
         end
         logger.info('map task start')
 
@@ -45,31 +45,37 @@ module SimpleMapReduce
         logger.debug(response.body)
 
         # {"succeeded":true,"workers":[{"id":70157882164440,"url":"http://localhost:4569","state":'reserved'}]}
-        reserved_workers = JSON.parse(response.body, symbolize_names: true)[:reserved_workers]
+        reserved_workers = JSON.parse(response.body, symbolize_names: true)[:reserved_workers].map do |worker|
+          SimpleMapReduce::Server::Worker.new(
+            id: worker[:id],
+            url: worker[:url],
+            state: worker[:state].to_sym,
+            data_store_type: 'remote'
+          )
+        end
         if reserved_workers.count == 0
           # keep working with same worker
-          reserved_workers << { id: map_worker_id, url: job.map_worker_url, state: 'working' }
+          reserved_workers << map_worker
         end
 
         shuffle(job, reserved_workers, local_output_cache)
 
-        unless reserved_workers.map { |w| w[:id] }.include?(map_worker_id)
-          response = http_client(SimpleMapReduce.job_tracker_url).put do |request|
-            request.url("/workers/#{map_worker_id}")
-            request.body = { event: 'ready' }.to_json
+        if reserved_workers.all? { |w| w.id != map_worker.id }
+          begin
+            map_worker.ready!
+          rescue => notify_error
+            logger.fatal(notify_error.inspect)
+            logger.fatal(notify_error.backtrace.take(50))
           end
-          logger.debug(response.body)
         end
       rescue => e
         logger.error(e.inspect)
         logger.error(e.backtrace.take(50))
+        job.failed!
         # TODO: notifying to job_tracker that this task have failed
       ensure
         local_input_cache&.delete
         local_output_cache&.delete
-        reserved_workers&.each do |worker|
-          worker[:shuffled_local_output]&.delete
-        end
         if self.class.const_defined?(task_wrapper_class_name.to_sym)
           self.class.send(:remove_const, task_wrapper_class_name.to_sym)
         end
@@ -106,14 +112,11 @@ module SimpleMapReduce
         workers_count = workers.count
         raise 'No workers' unless workers_count > 0
 
-        workers.each do |worker|
-          worker[:shuffled_local_output] = Tempfile.new
-        end
-
+        shuffled_local_outputs = Array.new(workers_count, Tempfile.new)
         local_output_cache.each_line(rs: "\n") do |raw_line|
           output = JSON.parse(raw_line, symbolize_names: true)
           partition_id = output[:key].hash % workers_count
-          workers[partition_id][:shuffled_local_output].puts(output.to_json)
+          shuffled_local_outputs[partition_id].puts(output.to_json)
         end
 
         task_script = job.reduce_script
@@ -134,7 +137,7 @@ module SimpleMapReduce
             task_output_directory_path: task_output_directory_path
           )
 
-          local_output_cache = worker[:shuffled_local_output]
+          local_output_cache = shuffled_local_outputs[partition_id]
           local_output_cache.rewind
           s3_client.put_object(
             body: local_output_cache.read,
@@ -142,18 +145,15 @@ module SimpleMapReduce
             key: reduce_task.task_input_file_path
           )
 
-          response = http_client(worker[:url]).post do |request|
+          response = http_client(worker.url).post do |request|
             request.url('/reduce_tasks')
             request.body = reduce_task.serialize
           end
           logger.debug(response.body)
-
-          next if worker[:state] == 'working'
-          response = http_client(SimpleMapReduce.job_tracker_url).put do |request|
-            request.url("/workers/#{worker[:id]}")
-            request.body = { event: 'work' }.to_json
-          end
-          logger.debug(response.body)
+        end
+      ensure
+        shuffled_local_outputs&.each do |output|
+          output.delete
         end
       end
     end

@@ -19,6 +19,9 @@ end
 
 require 'simple_map_reduce/version'
 require 'simple_map_reduce/s3_client'
+require 'simple_map_reduce/data_stores/default_data_store'
+require 'simple_map_reduce/data_stores/remote_data_store'
+require 'simple_map_reduce/data_store_factory'
 require 'simple_map_reduce/driver/config'
 require 'simple_map_reduce/driver/job'
 require 'simple_map_reduce/server/confg'

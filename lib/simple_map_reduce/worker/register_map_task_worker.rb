@@ -11,9 +11,6 @@ module SimpleMapReduce
           request.body = job.serialize
         end
         logger.debug(response.body)
-
-        job.map_worker.work!
-        job.start!
       rescue => e
         logger.error(e.inspect)
         logger.error(e.backtrace.take(50))

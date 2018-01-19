@@ -3,7 +3,7 @@
 module SimpleMapReduce
   module Worker
     class RunReduceTaskWorker
-      def perform(task, reduce_worker_id)
+      def perform(task, reduce_worker)
         task_wrapper_class_name = "TaskWrapper#{task.id.delete('-')}"
         self.class.class_eval("class #{task_wrapper_class_name}; end", 'Task Wrapper Class')
         task_wrapper_class = self.class.const_get(task_wrapper_class_name)
@@ -54,11 +54,7 @@ module SimpleMapReduce
         end
 
         begin
-          response = http_client(SimpleMapReduce.job_tracker_url).put do |request|
-            request.url("/workers/#{reduce_worker_id}")
-            request.body = { event: 'ready' }.to_json
-          end
-          logger.debug(response.body)
+          reduce_worker.ready!
         rescue => notify_error
           logger.fatal(notify_error.inspect)
           logger.fatal(notify_error.backtrace.take(50))

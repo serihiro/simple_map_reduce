@@ -15,7 +15,11 @@ module SimpleMapReduce
       delegate current_state: :aasm
       alias state current_state
 
+      STATES = %i(ready reserved working).freeze
+
       aasm do
+        after_all_transitions :save_state
+
         state :ready, initial: true
         state :reserved
         state :working
@@ -29,12 +33,18 @@ module SimpleMapReduce
         end
 
         event :work do
-          transitions from: :reserved, to: :working
+          transitions from: %i(reserved working), to: :working
         end
       end
 
-      def initialize(url:)
+      def initialize(url:, id: nil, state: nil, data_store_type: 'default')
         @url = url
+        @id = id
+        if STATES.include?(state)
+          aasm_write_state_without_persistence(state)
+        end
+        @data_store = SimpleMapReduce::DataStoreFactory.create(data_store_type,
+                                                             resource_name: 'workers', resource_id: self.id)
         unless valid?
           raise ArgumentError, 'invalid url'
         end
@@ -70,6 +80,10 @@ module SimpleMapReduce
 
       def valid?
         !@url.to_s.empty? && @url =~ URI::DEFAULT_PARSER.make_regexp
+      end
+
+      def save_state
+        @data_store.save_state(aasm.current_event)
       end
     end
   end

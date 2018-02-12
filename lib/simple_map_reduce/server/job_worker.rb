@@ -71,6 +71,7 @@ module SimpleMapReduce
           job_manager
           logger.info('All setup process is done successfully. This worker is operation ready.')
           logger.info("This job worker url: #{SimpleMapReduce.job_worker_url}, id: #{worker_id}")
+          logger.info("This job worker status url: #{SimpleMapReduce.job_worker_url}/workers/#{worker_id}")
           logger.info("The job tracker url: #{SimpleMapReduce.job_tracker_url}")
         end
 

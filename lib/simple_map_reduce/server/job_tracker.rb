@@ -19,16 +19,11 @@ module SimpleMapReduce
 
       post '/jobs' do
         params = JSON.parse(request.body.read, symbolize_names: true)
-        begin
-          available_workers = self.class.fetch_available_workers
+        available_workers = self.class.fetch_available_workers
         if available_workers.empty?
           status 409
           json(succeeded: false, error_message: 'No worker is available now. Try it again.')
           return
-        end
-        rescue => e
-          puts e.inspect
-          puts e.response[:body]
         end
 
         registered_job = nil
@@ -178,6 +173,7 @@ module SimpleMapReduce
           check_s3_access
           create_s3_buckets_if_not_existing
           job_manager
+          start_polling_workers
           logger.info('All setup process is done successfully. The job tracker is operation ready.')
           logger.info("This job tracker url: #{SimpleMapReduce.job_tracker_url}")
         end
@@ -260,9 +256,16 @@ module SimpleMapReduce
             ready_workers = ready_workers.keys.take(worker_size)
 
             ready_workers.map do |retry_worker_id|
-              @workers[retry_worker_id].reserve!
-              @workers[retry_worker_id]
-            end
+              begin
+                @workers[retry_worker_id].reserve!
+              rescue => e
+                logger.error("Failed to transit the worker state: `#{@workers[retry_worker_id]}`")
+                logger.error(e.inspect)
+                nil
+              else
+                @workers[retry_worker_id]
+              end
+            end.compact
           else
             return []
           end
@@ -280,6 +283,22 @@ module SimpleMapReduce
           @workers[worker.id].ready!
         ensure
           mutex.unlock
+        end
+
+        POLLING_INTERVAL = 10
+
+        def start_polling_workers
+          @keep_polling_workers = true
+
+          @polling_workers_thread = Thread.new do
+            loop do
+              break unless @keep_polling_workers
+
+              job_manager.enqueue_job!(SimpleMapReduce::Worker::PollingWorkersStatusWorker, args: @workers || {})
+              sleep(POLLING_INTERVAL)
+            end
+          end
+          @polling_workers_thread.run
         end
 
         def job_manager
@@ -300,6 +319,8 @@ module SimpleMapReduce
 
         # @override
         def quit!
+          @keep_polling_workers = false
+          @polling_workers_thread.kill
           job_manager.shutdown_workers!
           super
         end

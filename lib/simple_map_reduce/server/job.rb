@@ -19,7 +19,7 @@ module SimpleMapReduce
       alias state current_state
 
       aasm do
-        after_all_transitions :save_state
+        before_all_events :save_state
 
         state :ready, initial: true
         state :in_process
@@ -66,7 +66,9 @@ module SimpleMapReduce
           @map_worker = SimpleMapReduce::Server::Worker.new(url: map_worker_url)
         end
         @data_store = SimpleMapReduce::DataStoreFactory.create(data_store_type,
-                                                               resource_name: 'jobs', resource_id: @id)
+                                                               server_url: SimpleMapReduce.job_tracker_url,
+                                                               resource_name: 'jobs',
+                                                               resource_id: @id)
 
         unless valid?
           raise ArgumentError, 'invalid Job parameters are detected'

@@ -19,11 +19,16 @@ module SimpleMapReduce
 
       post '/jobs' do
         params = JSON.parse(request.body.read, symbolize_names: true)
-        available_workers = self.class.fetch_available_workers
+        begin
+          available_workers = self.class.fetch_available_workers
         if available_workers.empty?
           status 409
           json(succeeded: false, error_message: 'No worker is available now. Try it again.')
           return
+        end
+        rescue => e
+          puts e.inspect
+          puts e.response[:body]
         end
 
         registered_job = nil
@@ -234,7 +239,7 @@ module SimpleMapReduce
         end
 
         def register_worker(url:)
-          worker = ::SimpleMapReduce::Server::Worker.new(url: url)
+          worker = ::SimpleMapReduce::Server::Worker.new(url: url, data_store_type: 'remote')
           if @workers.nil?
             @workers = {}
           end
@@ -255,7 +260,7 @@ module SimpleMapReduce
             ready_workers = ready_workers.keys.take(worker_size)
 
             ready_workers.map do |retry_worker_id|
-              @workers[retry_worker_id].reserve
+              @workers[retry_worker_id].reserve!
               @workers[retry_worker_id]
             end
           else

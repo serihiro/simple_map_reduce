@@ -18,7 +18,7 @@ module SimpleMapReduce
       STATES = %i(ready reserved working).freeze
 
       aasm do
-        after_all_transitions :save_state
+        before_all_events :save_state
 
         state :ready, initial: true
         state :reserved
@@ -44,7 +44,9 @@ module SimpleMapReduce
           aasm_write_state_without_persistence(state)
         end
         @data_store = SimpleMapReduce::DataStoreFactory.create(data_store_type,
-                                                             resource_name: 'workers', resource_id: self.id)
+                                                             server_url: url,
+                                                             resource_name: 'workers',
+                                                             resource_id: self.id)
         unless valid?
           raise ArgumentError, 'invalid url'
         end

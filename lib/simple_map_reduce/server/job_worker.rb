@@ -18,15 +18,9 @@ module SimpleMapReduce
       post '/map_tasks' do
         raw_body = request.body.read
         job = SimpleMapReduce::Server::Job.deserialize(raw_body)
-        worker = SimpleMapReduce::Server::Worker.new(
-          id: self.class.worker_id,
-          url: SimpleMapReduce.job_worker_url,
-          state: :reserved,
-          data_store_type: 'remote'
-        )
-        worker.work!
+        self.class.worker.work!
         job.start!
-        self.class.job_manager.enqueue_job!(SimpleMapReduce::Worker::RunMapTaskWorker, args: [job, worker])
+        self.class.job_manager.enqueue_job!(SimpleMapReduce::Worker::RunMapTaskWorker, args: [job, self.class.worker])
 
         json(succeeded: true, job_id: job.id)
       end
@@ -34,20 +28,42 @@ module SimpleMapReduce
       post '/reduce_tasks' do
         raw_body = request.body.read
         task = SimpleMapReduce::Server::Task.deserialize(raw_body)
-        worker = SimpleMapReduce::Server::Worker.new(
-          id: self.class.worker_id,
-          url: SimpleMapReduce.job_worker_url,
-          state: :reserved,
-          data_store_type: 'remote'
-        )
-        worker.work!
-        self.class.job_manager.enqueue_job!(SimpleMapReduce::Worker::RunReduceTaskWorker, args: [task, worker])
+        self.class.worker.work!
+        self.class.job_manager.enqueue_job!(SimpleMapReduce::Worker::RunReduceTaskWorker, args: [task, self.class.worker])
 
         json(succeeded: true, job_id: task.job_id, task_id: task.id)
       end
 
+      put '/workers/:id' do
+        body = JSON.parse(request.body.read, symbolize_names: true)
+        if params[:id] != self.class.worker_id
+          status 404
+          json(succeeded: false, error_message: 'The specified worker id was not found.')
+          return
+        end
+
+        begin
+          self.class.worker.update!(body)
+          json(succeeded: true, worker: self.class.worker.dump)
+        rescue => e
+          puts e.inspect
+          status 400
+          json(succeeded: false, error_class: e.class.to_s, error_message: e.message)
+        end
+      end
+
+      get '/workers/:id' do
+        if params[:id] != self.class.worker_id
+          status 404
+          json(succeeded: false, error_message: 'The specified worker id was not found.')
+        else
+          json(succeeded: true, worker: self.class.worker.dump)
+        end
+      end
+
       class << self
-        attr_accessor :worker_id
+        attr_reader :worker_id
+        attr_reader :worker
 
         def setup_worker
           check_s3_access
@@ -55,6 +71,7 @@ module SimpleMapReduce
           job_manager
           logger.info('All setup process is done successfully. This worker is operation ready.')
           logger.info("This job worker url: #{SimpleMapReduce.job_worker_url}, id: #{worker_id}")
+          logger.info("This job worker status url: #{SimpleMapReduce.job_worker_url}/workers/#{worker_id}")
           logger.info("The job tracker url: #{SimpleMapReduce.job_tracker_url}")
         end
 
@@ -70,7 +87,11 @@ module SimpleMapReduce
           end
 
           body = JSON.parse(response.body, symbolize_names: true)
-          self.worker_id = body[:id]
+          @worker_id = body[:id]
+          @worker = SimpleMapReduce::Server::Worker.new(
+            id: @worker_id,
+            url: SimpleMapReduce.job_worker_url
+          )
           logger.info("[OK] registering this worker to the job_tracker #{SimpleMapReduce.job_worker_url}")
         end
 

@@ -14,7 +14,6 @@ module SimpleMapReduce
         when 'default'
           SimpleMapReduce::DataStores::DefaultDataStore.new(options)
         when 'remote'
-          options[:job_tracker_url] = SimpleMapReduce.job_tracker_url
           SimpleMapReduce::DataStores::RemoteDataStore.new(options)
         end
       end

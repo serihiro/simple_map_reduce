@@ -6,7 +6,7 @@ module SimpleMapReduce
       def initialize(options)
         @resource_name = options[:resource_name]
         @resource_id = options[:resource_id]
-        @job_tracker_url = options[:job_tracker_url]
+        @server_url = options[:server_url]
       end
 
       def save_state(event)
@@ -25,7 +25,7 @@ module SimpleMapReduce
 
       def http_client
         @http_client ||= ::Faraday.new(
-          url: @job_tracker_url,
+          url: @server_url,
           headers: HTTP_JSON_HEADER,
           request: {
             open_timeout: 10,

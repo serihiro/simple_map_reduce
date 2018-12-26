@@ -14,6 +14,7 @@ module SimpleMapReduce
         unless map_task.respond_to?(:map)
           raise InvalidMapTaskError, 'no map method'
         end
+
         logger.info('map task start')
 
         local_input_cache = Tempfile.new

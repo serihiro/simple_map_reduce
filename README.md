@@ -1,4 +1,3 @@
-[![Build Status](https://travis-ci.org/serihiro/simple_map_reduce.svg?branch=master)](https://travis-ci.org/serihiro/simple_map_reduce)
 [![Gem Version](https://badge.fury.io/rb/simple_map_reduce.svg)](https://badge.fury.io/rb/simple_map_reduce)
 
 # SimpleMapReduce

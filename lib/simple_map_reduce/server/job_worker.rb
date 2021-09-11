@@ -120,9 +120,10 @@ module SimpleMapReduce
           SimpleMapReduce.logger
         end
 
-        # @override
+        # @override `Sinatra::Base#quit!`
+        # https://github.com/sinatra/sinatra/blob/2e980f3534b680fbd79d7ec39552b4afb7675d6c/lib/sinatra/base.rb#L1483-L1491
         def quit!
-          job_manager.shutdown_workers!
+          job_manager&.shutdown_workers!
           super
         end
       end

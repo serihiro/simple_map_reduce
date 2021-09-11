@@ -25,7 +25,9 @@ Or install it yourself as:
 ### 1. Start minio server
 
 ```sh
-$ docker run -p 9000:9000 -e "MINIO_ACCESS_KEY=MINIO_ACCESS_KEY" -e "MINIO_SECRET_KEY=MINIO_SECRET_KEY" minio/minio server /data
+$ docker run -p 9000:9000 -p 9001:9001  \
+-e "MINIO_ROOT_USER=MINIO_ACCESS_KEY" -e "MINIO_ROOT_PASSWORD=MINIO_SECRET_KEY" -e "MINIO_REGION=us-east-1" \
+minio/minio server /data --console-address :9001
 ```
 
 ### 2. Start job tracker
@@ -69,19 +71,19 @@ $ bundle exec simple_map_reduce execute_word_count
 
 ## Quick start in Docker Compose
 
-- You can setup a simple_map_reduce cluster by docker-compose.
+- You can setup a simple_map_reduce cluster by docker compose.
 
 ```sh
 $ clone git@github.com:serihiro/simple_map_reduce.git
 $ cd simple_map_reduce
-$ docker-compose up
+$ docker compose up
 ```
 
 - You can execute word count sample by executing following commands
 
 ```sh
-$ docker-compose exec job_tracker bundle exec simple_map_reduce generate_lorem_text_data --upload=true
-$ docker-compose exec job_tracker bundle exec simple_map_reduce execute_word_count
+$ docker compose exec job_tracker bundle exec simple_map_reduce generate_lorem_text_data --upload=true
+$ docker compose exec job_tracker bundle exec simple_map_reduce execute_word_count
 ```
 
 ## Motivation of this project

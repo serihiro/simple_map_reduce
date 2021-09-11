@@ -63,8 +63,8 @@ module SimpleMapReduce
     def generate_lorem_text_data
       base_path = Dir.pwd
       file = File.open(File.join(base_path, 'input.txt'), 'w+')
-      file.write(Faker::Lorem.paragraphs(options[:count]).join("\n"))
-      puts 'input.txt generated'
+      file.write(Faker::Lorem.paragraphs(number: options[:count]).join("\n"))
+      puts('input.txt generated')
 
       if options[:upload]
         config = {
@@ -81,11 +81,11 @@ module SimpleMapReduce
           bucket: 'input',
           key: 'input.txt'
         )
-        puts 'uploaded'
+        puts('uploaded')
       end
 
       file.close
-      puts 'done'
+      puts('done')
     end
 
     desc 'execute_word_count', 'execute word count sample job'

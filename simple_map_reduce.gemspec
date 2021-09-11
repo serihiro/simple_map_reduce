@@ -30,7 +30,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'factory_bot', '~> 6.2.0'
   spec.add_development_dependency 'faker'
   spec.add_development_dependency 'mry'
-  spec.add_development_dependency 'rack-test', '~> 0.8.0'
+  spec.add_development_dependency 'rack-test', '~> 1.1.0'
   spec.add_development_dependency 'rake', '~> 12.3.0'
   spec.add_development_dependency 'rspec', '~> 3.0'
   spec.add_development_dependency 'rubocop', '1.20.0'

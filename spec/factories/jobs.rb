@@ -3,8 +3,9 @@
 FactoryBot.define do
   factory :job, class: SimpleMapReduce::Server::Job do
     transient do
-      map_script 'WordCount'
-      map_class_name <<-'EOS'
+      map_script { 'WordCount' }
+      map_class_name do
+        <<-'EOS'
         class WordCount
           def map(input_data, output_io)
             input_data.split(' ').each do |raw_word|
@@ -17,9 +18,11 @@ FactoryBot.define do
             end
           end
         end
-      EOS
-      reduce_class_name 'WordCount'
-      reduce_script <<-'EOS'
+        EOS
+      end
+      reduce_class_name { 'WordCount' }
+      reduce_script do
+        <<-'EOS'
         require 'json'
         class WordCount
           def reduce(input_io, output_io)
@@ -39,11 +42,12 @@ FactoryBot.define do
             end
           end
         end
-      EOS
-      job_input_directory_path 'input.txt'
-      job_input_bucket_name 'input'
-      job_output_directory_path 'word_count'
-      job_output_bucket_name 'output'
+        EOS
+      end
+      job_input_directory_path { 'input.txt' }
+      job_input_bucket_name { 'input' }
+      job_output_directory_path { 'word_count' }
+      job_output_bucket_name { 'output' }
     end
 
     initialize_with do

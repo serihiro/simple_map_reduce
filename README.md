@@ -1,9 +1,8 @@
 [![Gem Version](https://badge.fury.io/rb/simple_map_reduce.svg)](https://badge.fury.io/rb/simple_map_reduce)
 
 # SimpleMapReduce
-
-- This is a [MapReduce](https://research.google.com/archive/mapreduce.html) implementation distributed framework written in ruby.
-- This project is a experience project. So, the specifications will be changed suddenly.
+This is a [MapReduce](https://research.google.com/archive/mapreduce.html) distributed framework written in Ruby.
+This project is an experimental project. So all the specifications will be changed suddenly.
 
 ## Installation
 
@@ -26,7 +25,9 @@ Or install it yourself as:
 ### 1. Start minio server
 
 ```sh
-$ docker run -p 9000:9000 -e "MINIO_ACCESS_KEY=MINIO_ACCESS_KEY" -e "MINIO_SECRET_KEY=MINIO_SECRET_KEY" minio/minio server /data
+$ docker run -p 9000:9000 -p 9001:9001  \
+-e "MINIO_ROOT_USER=MINIO_ACCESS_KEY" -e "MINIO_ROOT_PASSWORD=MINIO_SECRET_KEY" -e "MINIO_REGION=us-east-1" \
+minio/minio server /data --console-address :9001
 ```
 
 ### 2. Start job tracker
@@ -70,25 +71,25 @@ $ bundle exec simple_map_reduce execute_word_count
 
 ## Quick start in Docker Compose
 
-- You can setup a simple_map_reduce cluster by docker-compose.
+- You can setup a simple_map_reduce cluster by docker compose.
 
 ```sh
 $ clone git@github.com:serihiro/simple_map_reduce.git
 $ cd simple_map_reduce
-$ docker-compose up
+$ docker compose up
 ```
 
 - You can execute word count sample by executing following commands
 
 ```sh
-$ docker-compose exec job_tracker bundle exec simple_map_reduce generate_lorem_text_data --upload=true
-$ docker-compose exec job_tracker bundle exec simple_map_reduce execute_word_count
+$ docker compose exec job_tracker bundle exec simple_map_reduce generate_lorem_text_data --upload=true
+$ docker compose exec job_tracker bundle exec simple_map_reduce execute_word_count
 ```
 
 ## Motivation of this project
-- I would like to lean the theory of distributed systems, big data processing, and MapReduce.
-- From my experiences, I believe that an implementation of them is best way to learn them.
-- So I decide to create an experimental implementation, and keep adding new features in order to get an practical experiences of theories which I would learn.
+I would have liked to lean the theory of distributed systems, big data processing, and MapReduce algorhythm.
+In my experiences, I believed that an implementation of them is the best way to learn them.
+So I decided to create an experimental implementation, and keep adding new features in order to get an practical experiences of the theories.
 
 ## Development
 

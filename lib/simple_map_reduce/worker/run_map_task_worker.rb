@@ -113,7 +113,8 @@ module SimpleMapReduce
         workers_count = workers.count
         raise 'No workers' unless workers_count > 0
 
-        shuffled_local_outputs = Array.new(workers_count, Tempfile.new)
+        shuffled_local_outputs = Array.new(workers_count)
+        shuffled_local_outputs.each_with_index { |_, i| shuffled_local_outputs[i] = Tempfile.new }
         local_output_cache.each_line(rs: "\n") do |raw_line|
           output = JSON.parse(raw_line, symbolize_names: true)
           partition_id = output[:key].hash % workers_count

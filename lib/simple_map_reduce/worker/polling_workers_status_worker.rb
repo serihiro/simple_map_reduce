@@ -6,16 +6,14 @@ module SimpleMapReduce
       def perform(workers)
         logger.debug("begin polling workers: #{workers.keys}")
         workers.each do |id, worker|
-          begin
-            response = http_client(worker.url).get("/workers/#{worker.id}")
-            body = JSON.parse(response.body, symbolize_names: true)[:worker]
-            worker.aasm.current_state = body[:state].to_sym
-          rescue => e
-            logger.error(e.inspect)
-            logger.error(e&.response&.inspect)
-            logger.info("Worker #{worker.id} is removed from workers")
-            workers.delete(id)
-          end
+          response = http_client(worker.url).get("/workers/#{worker.id}")
+          body = JSON.parse(response.body, symbolize_names: true)[:worker]
+          worker.aasm.current_state = body[:state].to_sym
+        rescue => e
+          logger.error(e.inspect)
+          logger.error(e&.response&.inspect)
+          logger.info("Worker #{worker.id} is removed from workers")
+          workers.delete(id)
         end
         logger.debug("finish polling workers: #{workers.keys}")
       end

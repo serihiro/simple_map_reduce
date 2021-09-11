@@ -39,15 +39,9 @@ module SimpleMapReduce
         end
       end
 
-      def initialize(id: nil,
-                     map_script:,
-                     map_class_name:,
-                     reduce_script:,
-                     reduce_class_name:,
-                     job_input_bucket_name:,
-                     job_input_directory_path:,
-                     job_output_bucket_name:,
-                     job_output_directory_path:,
+      def initialize(map_script:, map_class_name:, reduce_script:, reduce_class_name:, job_input_bucket_name:,
+                     job_input_directory_path:, job_output_bucket_name:, job_output_directory_path:,
+                     id: nil,
                      map_worker_url: nil,
                      map_worker: nil,
                      data_store_type: 'default')
@@ -128,7 +122,7 @@ module SimpleMapReduce
 
       class << self
         def deserialize(data)
-          params = Hash[MessagePack.unpack(data).map { |k, v| [k.to_sym, v] }]
+          params = MessagePack.unpack(data).transform_keys(&:to_sym)
           params[:data_store_type] = 'remote'
           new(params)
         end

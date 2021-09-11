@@ -28,7 +28,7 @@ module SimpleMapReduce
         @server_port = options[:server_port] || 4567
         @job_tracker_url = options[:job_tracker_url]
         @job_worker_url = options[:job_worker_url]
-        @logger = options[:logger] || Logger.new(STDOUT)
+        @logger = options[:logger] || Logger.new($stdout)
       end
 
       private

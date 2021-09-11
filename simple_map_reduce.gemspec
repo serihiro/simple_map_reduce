@@ -31,7 +31,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'faker'
   spec.add_development_dependency 'mry'
   spec.add_development_dependency 'rack-test', '~> 1.1.0'
-  spec.add_development_dependency 'rake', '~> 12.3.0'
+  spec.add_development_dependency 'rake', '~> 13.0.6'
   spec.add_development_dependency 'rspec', '~> 3.0'
   spec.add_development_dependency 'rubocop', '1.20.0'
   spec.add_runtime_dependency 'aasm', '~> 4.12.0'

@@ -15,21 +15,25 @@ Gem::Specification.new do |spec|
   spec.homepage      = 'https://github.com/serihiro/simple_map_reduce'
   spec.license       = 'MIT'
 
-  spec.files = `git ls-files -z`.split("\x0").reject do |f|
-    f.match(%r{^(test|spec|features)/})
-  end
+  spec.files = %w(CODE_OF_CONDUCT.md LICENSE.txt docker-compose.yml
+    simple_map_reduce.gemspec Dockerfile README.md Gemfile Rakefile)
+  spec.files += Dir.glob('lib/**/*')
+  spec.files += Dir.glob('bin/**/*')
+  spec.files += Dir.glob('exe/**/*')
+
   spec.bindir        = 'exe'
   spec.executables   = spec.files.grep(%r(^exe/)) { |f| File.basename(f) }
   spec.require_paths = ['lib']
-  spec.required_ruby_version = '>= 2.3.0'
+  spec.required_ruby_version = '>= 2.7.4'
 
-  spec.add_development_dependency 'bundler', '~> 1.17.0'
+  spec.add_development_dependency 'bundler', '~> 2.2.0'
   spec.add_development_dependency 'factory_bot', '~> 4.8.0'
   spec.add_development_dependency 'faker'
+  spec.add_development_dependency 'mry'
   spec.add_development_dependency 'rack-test', '~> 0.8.0'
   spec.add_development_dependency 'rake', '~> 12.3.0'
   spec.add_development_dependency 'rspec', '~> 3.0'
-  spec.add_development_dependency 'rubocop', '0.61.1'
+  spec.add_development_dependency 'rubocop', '1.20.0'
   spec.add_runtime_dependency 'aasm', '~> 4.12.0'
   spec.add_runtime_dependency 'aws-sdk', '~> 3.0.0'
   spec.add_runtime_dependency 'faraday', '~> 0.13.0'

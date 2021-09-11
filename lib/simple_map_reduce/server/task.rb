@@ -37,15 +37,8 @@ module SimpleMapReduce
         end
       end
 
-      def initialize(id: nil,
-                     job_id:,
-                     task_class_name:,
-                     task_script:,
-                     task_input_bucket_name:,
-                     task_input_file_path:,
-                     task_output_bucket_name:,
-                     task_output_directory_path:,
-                     worker: nil)
+      def initialize(job_id:, task_class_name:, task_script:, task_input_bucket_name:, task_input_file_path:,
+        task_output_bucket_name:, task_output_directory_path:, id: nil, worker: nil)
         @id = id
         @job_id = job_id
         @task_class_name = task_class_name
@@ -84,7 +77,7 @@ module SimpleMapReduce
 
       class << self
         def deserialize(data)
-          new(Hash[MessagePack.unpack(data).map { |k, v| [k.to_sym, v] }])
+          new(MessagePack.unpack(data).transform_keys(&:to_sym))
         end
       end
     end

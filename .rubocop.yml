@@ -1,5 +1,5 @@
 AllCops:
-  TargetRubyVersion: 2.3
+  TargetRubyVersion: 2.7
   DisplayCopNames: true
 
 PercentLiteralDelimiters:
@@ -17,7 +17,7 @@ PercentLiteralDelimiters:
 Metrics/BlockLength:
   Enabled: false
 
-Metrics/LineLength:
+Layout/LineLength:
   Max: 128
 
 Metrics/ClassLength:
@@ -32,13 +32,13 @@ Style/IfUnlessModifier:
 Style/GuardClause:
   Enabled: false
 
-Layout/AlignArray:
+Layout/ArrayAlignment:
   Enabled: false
 
-Layout/AlignHash:
+Layout/HashAlignment:
   Enabled: false
 
-Layout/AlignParameters:
+Layout/ParameterAlignment:
   Enabled: false
 
 Style/RescueStandardError:
@@ -63,7 +63,31 @@ Lint/AmbiguousBlockAssociation:
   Enabled: false
 
 Metrics/CyclomaticComplexity:
-  Max: 10
+  Max: 12
 
 Metrics/PerceivedComplexity:
-  Max: 10
+  Max: 12
+
+Style/AccessorGrouping:
+  Enabled: false
+
+Metrics/CyclomaticComplexity:
+  Enabled: false
+
+Layout/RescueEnsureAlignment:
+  Enabled: false
+
+Naming/RescuedExceptionsVariableName:
+  Enabled: false
+
+Layout/BeginEndAlignment:
+  Enabled: false
+
+Layout/ArgumentAlignment:
+  Enabled: false
+
+Style/EvalWithLocation:
+  Enabled: false
+
+Lint/ConstantDefinitionInBlock:
+  Enabled: false

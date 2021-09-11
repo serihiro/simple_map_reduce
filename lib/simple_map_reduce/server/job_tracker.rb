@@ -256,18 +256,16 @@ module SimpleMapReduce
             ready_workers = ready_workers.keys.take(worker_size)
 
             ready_workers.map do |retry_worker_id|
-              begin
-                @workers[retry_worker_id].reserve!
-              rescue => e
-                logger.error("Failed to transit the worker state: `#{@workers[retry_worker_id]}`")
-                logger.error(e.inspect)
-                nil
-              else
-                @workers[retry_worker_id]
-              end
+              @workers[retry_worker_id].reserve!
+            rescue => e
+              logger.error("Failed to transit the worker state: `#{@workers[retry_worker_id]}`")
+              logger.error(e.inspect)
+              nil
+            else
+              @workers[retry_worker_id]
             end.compact
           else
-            return []
+            []
           end
         ensure
           mutex.unlock

@@ -1,9 +1,8 @@
 [![Gem Version](https://badge.fury.io/rb/simple_map_reduce.svg)](https://badge.fury.io/rb/simple_map_reduce)
 
 # SimpleMapReduce
-
-- This is a [MapReduce](https://research.google.com/archive/mapreduce.html) implementation distributed framework written in ruby.
-- This project is a experience project. So, the specifications will be changed suddenly.
+This is a [MapReduce](https://research.google.com/archive/mapreduce.html) distributed framework written in Ruby.
+This project is an experimental project. So all the specifications will be changed suddenly.
 
 ## Installation
 
@@ -86,9 +85,9 @@ $ docker-compose exec job_tracker bundle exec simple_map_reduce execute_word_cou
 ```
 
 ## Motivation of this project
-- I would like to lean the theory of distributed systems, big data processing, and MapReduce.
-- From my experiences, I believe that an implementation of them is best way to learn them.
-- So I decide to create an experimental implementation, and keep adding new features in order to get an practical experiences of theories which I would learn.
+I would have liked to lean the theory of distributed systems, big data processing, and MapReduce algorhythm.
+In my experiences, I believed that an implementation of them is the best way to learn them.
+So I decided to create an experimental implementation, and keep adding new features in order to get an practical experiences of the theories.
 
 ## Development
 

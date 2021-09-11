@@ -1,5 +1,5 @@
 AllCops:
-  TargetRubyVersion: 2.3
+  TargetRubyVersion: 2.7
   DisplayCopNames: true
 
 PercentLiteralDelimiters:
@@ -17,7 +17,7 @@ PercentLiteralDelimiters:
 Metrics/BlockLength:
   Enabled: false
 
-Metrics/LineLength:
+Layout/LineLength:
   Max: 128
 
 Metrics/ClassLength:
@@ -32,13 +32,13 @@ Style/IfUnlessModifier:
 Style/GuardClause:
   Enabled: false
 
-Layout/AlignArray:
+Layout/ArrayAlignment:
   Enabled: false
 
-Layout/AlignHash:
+Layout/HashAlignment:
   Enabled: false
 
-Layout/AlignParameters:
+Layout/ParameterAlignment:
   Enabled: false
 
 Style/RescueStandardError:

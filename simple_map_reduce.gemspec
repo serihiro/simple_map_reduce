@@ -41,5 +41,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'rasteira', '~> 0.1.0'
   spec.add_runtime_dependency 'sinatra', '~> 2.0.0'
   spec.add_runtime_dependency 'sinatra-contrib', '~> 2.0.0'
-  spec.add_runtime_dependency 'thor', '~> 0.20.0'
+  spec.add_runtime_dependency 'thor', '>= 0.20', '< 1.2'
 end

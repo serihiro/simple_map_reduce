@@ -33,7 +33,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rack-test', '~> 2.0.2'
   spec.add_development_dependency 'rake', '~> 13.0.6'
   spec.add_development_dependency 'rspec', '~> 3.0'
-  spec.add_development_dependency 'rubocop', '1.41.0'
+  spec.add_development_dependency 'rubocop', '1.47.0'
   spec.add_runtime_dependency 'aasm', '>= 4.12', '< 5.3'
   spec.add_runtime_dependency 'aws-sdk', '>= 3.0', '< 3.2'
   spec.add_runtime_dependency 'faraday', '>= 0.13', '< 2.8'

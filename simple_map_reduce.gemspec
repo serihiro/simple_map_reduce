@@ -24,16 +24,16 @@ Gem::Specification.new do |spec|
   spec.bindir        = 'exe'
   spec.executables   = spec.files.grep(%r(^exe/)) { |f| File.basename(f) }
   spec.require_paths = ['lib']
-  spec.required_ruby_version = '>= 2.7.4'
+  spec.required_ruby_version = '>= 3.3.7'
 
-  spec.add_development_dependency 'bundler', '~> 2.2.0'
-  spec.add_development_dependency 'factory_bot', '~> 6.2.0'
+  spec.add_development_dependency 'bundler', '>= 2.6.5'
+  spec.add_development_dependency 'factory_bot', '~> 6.5', '>= 6.5.1'
   spec.add_development_dependency 'faker'
   spec.add_development_dependency 'mry'
   spec.add_development_dependency 'rack-test', '~> 2.0.2'
-  spec.add_development_dependency 'rake', '~> 13.0.6'
-  spec.add_development_dependency 'rspec', '~> 3.0'
-  spec.add_development_dependency 'rubocop', '1.41.0'
+  spec.add_development_dependency 'rake', '~> 13.2.1'
+  spec.add_development_dependency 'rspec', '~> 3.13.0'
+  spec.add_development_dependency 'rubocop', '1.73.1'
   spec.add_runtime_dependency 'aasm', '>= 4.12', '< 5.3'
   spec.add_runtime_dependency 'aws-sdk', '>= 3.0', '< 3.2'
   spec.add_runtime_dependency 'faraday', '>= 0.13', '< 2.8'

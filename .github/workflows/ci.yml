@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - 'master'
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1.173.0
+      with:
+        ruby-version: '3.3.7' # Match the project's .ruby-version file
+        bundler-cache: true # Runs 'bundle install' and caches installed gems automatically
+    
+    - name: Run RuboCop
+      run: bundle exec rubocop --fail-level warning
+      
+    - name: Run RSpec
+      run: bundle exec rspec

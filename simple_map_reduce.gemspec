@@ -26,7 +26,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
   spec.required_ruby_version = '>= 3.3.7'
 
-  spec.add_development_dependency 'bundler', '>= 2.6.5'
+  spec.add_development_dependency 'bundler', '>= 2.5'
   spec.add_development_dependency 'factory_bot', '~> 6.5', '>= 6.5.1'
   spec.add_development_dependency 'faker'
   spec.add_development_dependency 'mry'

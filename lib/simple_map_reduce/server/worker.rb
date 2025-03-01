@@ -64,17 +64,24 @@ module SimpleMapReduce
         }
       end
 
-      # update Job
+      # update Worker
       # @params [Hash] attributes
       # @options attributes [String] url
       # @options attributes [String] event
-      def update!(url: nil, event: nil)
+      def update!(attrs = {})
+        # Handle both hash and keyword arguments
+        attrs = attrs.is_a?(Hash) ? attrs : { url: nil, event: nil }
+        url = attrs[:url]
+        event = attrs[:event]
+
         if url
           self.url = url
         end
 
         if event
-          public_send(event.to_sym)
+          event_name = event.to_s.sub(/!$/, '')
+          event_method = "#{event_name}!".to_sym
+          public_send(event_method)
         end
       end
 

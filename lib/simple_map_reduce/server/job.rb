@@ -45,7 +45,6 @@ module SimpleMapReduce
                      map_worker_url: nil,
                      map_worker: nil,
                      data_store_type: 'default')
-
         @id = id
         @map_script = map_script&.strip
         @map_class_name = map_class_name&.strip
@@ -114,9 +113,15 @@ module SimpleMapReduce
       # update Job
       # @params [Hash] attributes
       # @options attributes [String] event
-      def update!(event: nil)
+      def update!(attrs = {})
+        # Handle both hash and keyword arguments
+        attrs = attrs.is_a?(Hash) ? attrs : { event: attrs }
+        event = attrs[:event]
+
         if event
-          public_send(event.to_sym)
+          event_name = event.to_s.sub(/!$/, '')
+          event_method = "#{event_name}!".to_sym
+          public_send(event_method)
         end
       end
 

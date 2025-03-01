@@ -211,7 +211,6 @@ module SimpleMapReduce
                          job_output_bucket_name:,
                          job_output_directory_path:,
                          map_worker:)
-
           job = ::SimpleMapReduce::Server::Job.new(
             map_script: map_script,
             map_class_name: map_class_name,

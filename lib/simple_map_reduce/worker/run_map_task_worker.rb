@@ -155,7 +155,7 @@ module SimpleMapReduce
         end
       ensure
         shuffled_local_outputs&.each do |output|
-          output.delete
+          output&.delete
         end
       end
     end

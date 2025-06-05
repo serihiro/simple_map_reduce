@@ -154,6 +154,7 @@ module SimpleMapReduce
           (params[:worker_size].to_i.zero? ? 1 : params[:worker_size].to_i.abs),
           MAX_WORKER_RESERVABLE_SIZE
         ].min
+        reserved_workers = []
         begin
           reserved_workers = self.class.fetch_available_workers(worker_size)
           json(succeeded: true, reserved_workers: reserved_workers.map(&:dump))

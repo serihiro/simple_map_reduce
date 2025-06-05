@@ -70,7 +70,7 @@ module SimpleMapReduce
       # @options attributes [String] event
       def update!(attrs = {})
         # Handle both hash and keyword arguments
-        attrs = attrs.is_a?(Hash) ? attrs : { url: nil, event: nil }
+        attrs = attrs.is_a?(Hash) ? attrs : { event: attrs }
         url = attrs[:url]
         event = attrs[:event]
 

@@ -39,7 +39,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'faraday', '>= 0.13', '< 2.8'
   spec.add_runtime_dependency 'msgpack', '>= 1.2', '< 1.5'
   spec.add_runtime_dependency 'rasteira', '~> 0.1.0'
-  spec.add_runtime_dependency 'sinatra', '~> 3.0'
-  spec.add_runtime_dependency 'sinatra-contrib', '~> 3.0'
+  spec.add_runtime_dependency 'sinatra', '~> 4.1'
+  spec.add_runtime_dependency 'sinatra-contrib', '~> 4.1'
   spec.add_runtime_dependency 'thor', '>= 0.20', '< 1.3'
 end

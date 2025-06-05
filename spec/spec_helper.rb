@@ -3,6 +3,7 @@
 require 'bundler/setup'
 require 'simple_map_reduce'
 require 'rack/test'
+Rack::Test.const_set(:DEFAULT_HOST, 'localhost')
 require 'factory_bot'
 
 ENV['RACK_ENV'] = 'test'

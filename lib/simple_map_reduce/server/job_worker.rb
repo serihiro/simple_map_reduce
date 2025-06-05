@@ -11,6 +11,9 @@ module SimpleMapReduce
       configure do
         use Rack::Lock
       end
+      configure :test do
+        disable :protection
+      end
       configure :development do
         register Sinatra::Reloader
       end

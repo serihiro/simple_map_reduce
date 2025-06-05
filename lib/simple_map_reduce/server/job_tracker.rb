@@ -13,6 +13,9 @@ module SimpleMapReduce
         # TODO: be configurable
         MAX_WORKER_RESERVABLE_SIZE = 5
       end
+      configure :test do
+        disable :protection
+      end
       configure :development do
         register Sinatra::Reloader
       end

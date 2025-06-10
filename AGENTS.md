@@ -1,6 +1,6 @@
 # Development Guidelines
 
-This project is a MapReduce framework implemented in Ruby. Development targets Ruby 3.3 and uses Bundler for dependency management.
+This project is a MapReduce framework implemented in Ruby. Development targets Ruby 3.4 and uses Bundler for dependency management.
 
 ## Setup
 
